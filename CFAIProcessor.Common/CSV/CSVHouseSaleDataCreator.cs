@@ -57,8 +57,8 @@ namespace CFAIProcessor.CSV
             return new HouseSaleData()
             {
                 NumberOfBeds = rowGroup.ColumnConfig(CSVHouseSaleDataColumnNames.NumberOfBeds).GetRandomValue(random),
-                SizeInSquareFeet = NumericUtilities.RoundDownToNearest(rowGroup.ColumnConfig(CSVHouseSaleDataColumnNames.SizeInSquareFeet).GetRandomValue(random), 1000),
-                SalePrice = NumericUtilities.RoundDownToNearest(rowGroup.ColumnConfig(CSVHouseSaleDataColumnNames.SalePrice).GetRandomValue(random), 10000),
+                SizeInSquareFeet = NumericUtilities.RoundDownToNearestDivisor(rowGroup.ColumnConfig(CSVHouseSaleDataColumnNames.SizeInSquareFeet).GetRandomValue(random), 1000),
+                SalePrice = NumericUtilities.RoundDownToNearestDivisor(rowGroup.ColumnConfig(CSVHouseSaleDataColumnNames.SalePrice).GetRandomValue(random), 10000),
             };
         }
 
@@ -69,21 +69,21 @@ namespace CFAIProcessor.CSV
             rowGroups.Add(new CSVRowGroup()
             {
                 Name = "1 bed",
-                ColumnConfigs = new List<ColumnConfig>()
+                ColumnConfigs = new List<CSVColumnConfig>()
                 {
-                    new ColumnConfig()
+                    new CSVColumnConfig()
                     {
                         Name = CSVHouseSaleDataColumnNames.NumberOfBeds,
                         MinValue = 1,
                         MaxValue = 1,
                     },
-                    new ColumnConfig()
+                    new CSVColumnConfig()
                     {
                         Name = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
                         MinValue = 1000,
                         MaxValue = 5000
                     },
-                    new ColumnConfig()
+                    new CSVColumnConfig()
                     {
                         Name = CSVHouseSaleDataColumnNames.SalePrice,
                         MinValue = 100000,
@@ -95,21 +95,21 @@ namespace CFAIProcessor.CSV
             rowGroups.Add(new CSVRowGroup()
             {
                 Name = "2 bed",
-                ColumnConfigs = new List<ColumnConfig>()
+                ColumnConfigs = new List<CSVColumnConfig>()
                 {
-                    new ColumnConfig()
+                    new CSVColumnConfig()
                     {
                         Name = CSVHouseSaleDataColumnNames.NumberOfBeds,
                         MinValue = 2,
                         MaxValue = 2,
                     },
-                    new ColumnConfig()
+                    new CSVColumnConfig()
                     {
                         Name = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
                         MinValue = 5000,
                         MaxValue = 9000
                     },
-                    new ColumnConfig()
+                    new CSVColumnConfig()
                     {
                         Name = CSVHouseSaleDataColumnNames.SalePrice,
                         MinValue = 200000,
@@ -121,21 +121,21 @@ namespace CFAIProcessor.CSV
             rowGroups.Add(new CSVRowGroup()
             {
                 Name = "3 bed",
-                ColumnConfigs = new List<ColumnConfig>()
+                ColumnConfigs = new List<CSVColumnConfig>()
                 {
-                    new ColumnConfig()
+                    new CSVColumnConfig()
                     {
                         Name = CSVHouseSaleDataColumnNames.NumberOfBeds,
                         MinValue = 3,
                         MaxValue = 3,
                     },
-                    new ColumnConfig()
+                    new CSVColumnConfig()
                     {
                         Name = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
                         MinValue = 10000,
                         MaxValue = 20000
                     },
-                    new ColumnConfig()
+                    new CSVColumnConfig()
                     {
                         Name = CSVHouseSaleDataColumnNames.SalePrice,
                         MinValue = 300000,
@@ -147,21 +147,21 @@ namespace CFAIProcessor.CSV
             rowGroups.Add(new CSVRowGroup()
             {
                 Name = "4 bed",
-                ColumnConfigs = new List<ColumnConfig>()
+                ColumnConfigs = new List<CSVColumnConfig>()
                 {
-                    new ColumnConfig()
+                    new CSVColumnConfig()
                     {
                         Name = CSVHouseSaleDataColumnNames.NumberOfBeds,
                         MinValue = 4,
                         MaxValue = 4,
                     },
-                    new ColumnConfig()
+                    new CSVColumnConfig()
                     {
                         Name = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
                         MinValue = 20000,
                         MaxValue = 30000,
                     },
-                    new ColumnConfig()
+                    new CSVColumnConfig()
                     {
                         Name = CSVHouseSaleDataColumnNames.SalePrice,
                         MinValue = 450000,
@@ -173,21 +173,21 @@ namespace CFAIProcessor.CSV
             rowGroups.Add(new CSVRowGroup()
             {
                 Name = "5 bed",
-                ColumnConfigs = new List<ColumnConfig>()
+                ColumnConfigs = new List<CSVColumnConfig>()
                 {
-                    new ColumnConfig()
+                    new CSVColumnConfig()
                     {
                         Name = CSVHouseSaleDataColumnNames.NumberOfBeds,
                         MinValue = 5,
                         MaxValue = 5,
                     },
-                    new ColumnConfig()
+                    new CSVColumnConfig()
                     {
                         Name = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
                         MinValue = 30000,
                         MaxValue = 40000,
                     },
-                    new ColumnConfig()
+                    new CSVColumnConfig()
                     {
                         Name = CSVHouseSaleDataColumnNames.SalePrice,
                         MinValue = 600000,

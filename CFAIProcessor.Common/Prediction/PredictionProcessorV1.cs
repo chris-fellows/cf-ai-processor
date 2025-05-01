@@ -17,23 +17,18 @@ namespace CFAIProcessor.Prediction
     /// </summary>
     /// <typeparam name="TEntityType"></typeparam>
     internal class PredictionProcessorV1<TEntityType>
-    {      
-        //public int training_epochs = 1000;
-
-        // Parameters
-        //float learning_rate = 0.01f;
-        int display_step = 50;
-
-        NDArray train_X, train_Y;
-        int n_samples;
+    {              
+        private int _displayStep = 50;
+        private NDArray? _trainX;
+        private NDArray? _trainY;        
 
         public bool Run(PredictionConfig predictionConfig, ISimpleLog log)
         {            
             tf.compat.v1.disable_eager_execution();
+            
+            CreateData();
+            int n_samples = (int)_trainX.shape[0];
 
-            // Training Data
-            PrepareData();
-                       
             // tf Graph Input
             var X = tf.placeholder(tf.float32, name: "placeholderX");
             var Y = tf.placeholder(tf.float32, name: "placeholderY");
@@ -70,19 +65,19 @@ namespace CFAIProcessor.Prediction
             // Fit all training data
             for (int epoch = 0; epoch < predictionConfig.TrainingEpochs; epoch++)
             {
-                foreach (var (x, y) in zip<float>(train_X, train_Y))
+                foreach (var (x, y) in zip<float>(_trainX, _trainY))
                     session.run(optimizer, (X, x), (Y, y));
 
                 // Display logs per epoch step
-                if ((epoch + 1) % display_step == 0)
+                if ((epoch + 1) % _displayStep == 0)
                 {
-                    var c = session.run(cost, (X, train_X), (Y, train_Y));
+                    var c = session.run(cost, (X, _trainX), (Y, _trainY));
                     log.Log(DateTimeOffset.UtcNow, "Information", $"Epoch: {epoch + 1} cost={c} " + $"W={session.run(W)} b={session.run(b)}");
                 }
             }            
 
             log.Log(DateTimeOffset.UtcNow, "Information", "Optimization Finished!");
-            var training_cost = session.run(cost, (X, train_X), (Y, train_Y));            
+            var training_cost = session.run(cost, (X, _trainX), (Y, _trainY));            
             log.Log(DateTimeOffset.UtcNow, "Information", $"Training cost={training_cost} W={session.run(W)} b={session.run(b)}, name={training_cost.name}");                        
 
             // Testing example
@@ -102,17 +97,15 @@ namespace CFAIProcessor.Prediction
             return difference < 0.01;
         }
 
-        public void PrepareData()
+        private void CreateData()
         {
             //var chrisTestArray = np.array(new[,] { { 10, 11 }, { 12, 13 } });
 
-            train_X = np.array(3.3f, 4.4f, 5.5f, 6.71f, 6.93f, 4.168f, 9.779f, 6.182f, 7.59f, 2.167f,
+            _trainX = np.array(3.3f, 4.4f, 5.5f, 6.71f, 6.93f, 4.168f, 9.779f, 6.182f, 7.59f, 2.167f,
              7.042f, 10.791f, 5.313f, 7.997f, 5.654f, 9.27f, 3.1f);
 
-            train_Y = np.array(1.7f, 2.76f, 2.09f, 3.19f, 1.694f, 1.573f, 3.366f, 2.596f, 2.53f, 1.221f,
-                         2.827f, 3.465f, 1.65f, 2.904f, 2.42f, 2.94f, 1.3f);
-
-            n_samples = (int)train_X.shape[0];
+            _trainY = np.array(1.7f, 2.76f, 2.09f, 3.19f, 1.694f, 1.573f, 3.366f, 2.596f, 2.53f, 1.221f,
+                         2.827f, 3.465f, 1.65f, 2.904f, 2.42f, 2.94f, 1.3f);           
         }
     }
 }

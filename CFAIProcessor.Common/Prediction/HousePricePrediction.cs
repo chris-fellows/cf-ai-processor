@@ -1,6 +1,8 @@
-﻿using CFAIProcessor.Common;
+﻿using CFAIProcessor.Constants;
+using CFAIProcessor.Interfaces;
 using CFAIProcessor.Logging;
 using CFAIProcessor.Models;
+using CFAIProcessor.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -14,9 +16,9 @@ namespace CFAIProcessor.Prediction
     /// <summary>
     /// Predicts house price because of learning data file of house sales
     /// </summary>
-    public class HousePricePrediction
+    public class HousePricePrediction : IPredictionDataSource
     {
-        public void Run()
+        public void Run(string trainDataFile, string testDataFile)
         {
             var logFile = "D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\Log\\Log.txt";
             Directory.CreateDirectory(Path.GetDirectoryName(logFile));
@@ -26,18 +28,16 @@ namespace CFAIProcessor.Prediction
             {
                 Name = "Linear Regression (Graph)",
                 TrainingEpochs = 1000,
-                LearningRate = 0.01f,
-                Enabled = true,
-                IsImportingGraph = false,
-                TrainDataFile = "D:\\Data\\Dev\\C#\\cf-ai-processor-local\\sales-train-v2.txt",
-                TestDataFile = "D:\\Data\\Dev\\C#\\cf-ai-processor-local\\sales-test-v2.txt",
+                LearningRate = 0.01f,                
+                IsImportingGraph = false,                
+                NormaliseValues = true,
+                TrainDataFile = trainDataFile,
+                TestDataFile = testDataFile                
             };
 
-            var predictionNew = new PredictionProcessorV2<HouseSaleData>();
-            predictionNew.Run(config, log,
-                            (dataFile) => GetFeatures(dataFile),
-                            (dataFile) => GetLabels(dataFile));
-            
+            var predictionNew = new PredictionProcessorV2();
+            predictionNew.Run(config, log, this);
+                                        
             var prediction2 = new PredictionProcessorSaved<HouseSaleData>();
             prediction2.Run(config, log);
 
@@ -47,7 +47,7 @@ namespace CFAIProcessor.Prediction
             int xx = 1000;
         }
 
-        private NDArray GetFeatures(string dataFile)
+        public NDArray GetFeatures(string dataFile, bool normalise)
         {
             var items = GetData(dataFile);
 
@@ -55,25 +55,26 @@ namespace CFAIProcessor.Prediction
 
             var minNumberOfBeds = 1;
             var maxNumberOfBeds = 10;
-            var minSquareFeed = 1;
-            var maxSquareFeed = 1000000;
+            var minSquareFeet = 1;
+            var maxSquareFeet = 1000000;
            
             int rowIndex = -1;
             foreach(var item in items)
             {
-                rowIndex++;
-                //features[rowIndex] = new[] { item.NumberOfBeds, item.SizeInSquareFeet };
+                rowIndex++;              
                 features[rowIndex] = new[]
                 {
-                    Convert.ToSingle(Normalize(item.NumberOfBeds, minNumberOfBeds, maxNumberOfBeds, 0, 1)),
-                    Convert.ToSingle(Normalize(item.SizeInSquareFeet, minSquareFeed, maxSquareFeed, 0, 1))
+                    normalise ? Convert.ToSingle(NumericUtilities.Normalize(item.NumberOfBeds, minNumberOfBeds, maxNumberOfBeds, 0, 1)) :
+                            Convert.ToSingle(item.NumberOfBeds),
+                    normalise ? Convert.ToSingle(NumericUtilities.Normalize(item.SizeInSquareFeet, minSquareFeet, maxSquareFeet, 0, 1)) : 
+                            Convert.ToSingle(item.SizeInSquareFeet)
                 };
             }
 
             return features;
         }
 
-        private NDArray GetLabels(string dataFile)
+        public NDArray GetLabels(string dataFile, bool normalise)
         {
             var items = GetData(dataFile);
 
@@ -85,14 +86,12 @@ namespace CFAIProcessor.Prediction
             int rowIndex = -1;
             foreach (var item in items)
             {
-                rowIndex++;
-                //labels[rowIndex] = new[] { item.SalePrice };
+                rowIndex++;                
                 labels[rowIndex] = new[]
                 {
-                    Convert.ToSingle(Normalize(item.SalePrice, minSalePrice, maxSalePrice, 0, 1))
-                };
-                //var shape = labels[rowIndex].shape;
-                //int zzz = 1000;
+                    normalise ? Convert.ToSingle(NumericUtilities.Normalize(item.SalePrice, minSalePrice, maxSalePrice, 0, 1)) : 
+                        Convert.ToSingle(item.SalePrice)
+                };                
             }
 
             return labels;
@@ -124,9 +123,9 @@ namespace CFAIProcessor.Prediction
                     {
                         var item = new HouseSaleData()
                         {
-                            NumberOfBeds = Convert.ToSingle(elements[headers.IndexOf("number_of_beds")]),
-                            SizeInSquareFeet = Convert.ToSingle(elements[headers.IndexOf("size_in_square_feet")]),
-                            SalePrice = Convert.ToSingle(elements[headers.IndexOf("sale_price")]),
+                            NumberOfBeds = Convert.ToSingle(elements[headers.IndexOf(CSVHouseSaleDataColumnNames.NumberOfBeds)]),
+                            SizeInSquareFeet = Convert.ToSingle(elements[headers.IndexOf(CSVHouseSaleDataColumnNames.SizeInSquareFeet)]),
+                            SalePrice = Convert.ToSingle(elements[headers.IndexOf(CSVHouseSaleDataColumnNames.SalePrice)]),
                         };
                         items.Add(item);
                     }
@@ -134,11 +133,6 @@ namespace CFAIProcessor.Prediction
             }
 
             return items;
-        }
-
-        private double Normalize(double val, double valmin, double valmax, double outputMin, double outputMax)
-        {
-            return (((val - valmin) / (valmax - valmin)) * (outputMax - outputMin)) + outputMin;
         }
     }
 }

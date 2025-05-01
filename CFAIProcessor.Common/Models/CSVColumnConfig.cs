@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CFAIProcessor.Models
 {
-    internal class ColumnConfig
+    internal class CSVColumnConfig
     {
         public string Name { get; set; } = String.Empty;
 

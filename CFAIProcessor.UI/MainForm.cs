@@ -1,4 +1,5 @@
 using CFAIProcessor.CSV;
+using CFAIProcessor.ImageChecker;
 using CFAIProcessor.Prediction;
 
 namespace CFAIProcessor.UI
@@ -15,9 +16,12 @@ namespace CFAIProcessor.UI
 
         private void btnTest1_Click(object sender, EventArgs e)
         {
+            var trainDataFile = "D:\\Data\\Dev\\C#\\cf-ai-processor-local\\sales-train-v2.txt";
+            var testDataFile = "D:\\Data\\Dev\\C#\\cf-ai-processor-local\\sales-test-v2.txt";
+
             var prediction = new HousePricePrediction();
 
-            prediction.Run();
+            prediction.Run(trainDataFile, testDataFile);
 
             int xxx = 1000;
         }

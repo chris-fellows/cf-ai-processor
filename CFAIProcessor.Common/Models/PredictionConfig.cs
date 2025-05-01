@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CFAIProcessor.Models
+﻿namespace CFAIProcessor.Models
 {
+    /// <summary>
+    /// Prediction config
+    /// </summary>
     internal class PredictionConfig
     {
         public string Name { get; set; } = String.Empty;
@@ -16,9 +13,9 @@ namespace CFAIProcessor.Models
 
         public int TrainingEpochs { get; set; } = 1000;
 
-        public float LearningRate { get; set; } = 0.01f;
+        public float LearningRate { get; set; } = 0.01f;        
 
-        public bool Enabled { get; set; } = true;
+        public bool NormaliseValues { get; set; } = true;
 
         public bool IsImportingGraph { get; set; } = false;
 

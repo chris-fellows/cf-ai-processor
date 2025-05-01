@@ -7,8 +7,8 @@
     {        
         public string Name { get; set; } = String.Empty;
 
-        public List<ColumnConfig> ColumnConfigs { get; set; } = new List<ColumnConfig>();
+        public List<CSVColumnConfig> ColumnConfigs { get; set; } = new List<CSVColumnConfig>();
 
-        public ColumnConfig ColumnConfig(string name) => ColumnConfigs.First(c => c.Name == name);        
+        public CSVColumnConfig ColumnConfig(string name) => ColumnConfigs.First(c => c.Name == name);        
     }
 }

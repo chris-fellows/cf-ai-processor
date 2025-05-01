@@ -10,36 +10,25 @@ using static Tensorflow.Binding;
 using CFAIProcessor.Logging;
 using Tensorflow;
 using Tensorflow.Sessions;
+using CFAIProcessor.Interfaces;
 
 namespace CFAIProcessor.Prediction
 {
     /// <summary>
-    /// V2 to try and handle multiple input parameters
+    /// Runs prediction from data source
     /// </summary>
-    /// <typeparam name="TEntityType"></typeparam>
-    internal class PredictionProcessorV2<TEntityType>
-    {
-        //public int training_epochs = 1000;
-
-        // Parameters
-        //float learning_rate = 0.01f;
-        int display_step = 50;
-
-        NDArray train_X, train_Y;
-        int n_samples;
-
+    internal class PredictionProcessorV2
+    {        
+        private int _displayStep = 50;
+      
         public bool Run(PredictionConfig predictionConfig, ISimpleLog log,
-                    Func<string, NDArray> getFeaturesFunction,
-                    Func<string, NDArray> getLabelsFunction)
+                        IPredictionDataSource dataSource)
         {
             tf.compat.v1.disable_eager_execution();
 
-            // Training Data
-            //PrepareData();
-
-            train_X = getFeaturesFunction(predictionConfig.TrainDataFile);
-            train_Y = getLabelsFunction(predictionConfig.TrainDataFile);            
-            n_samples = (int)train_X.shape[0];
+            NDArray _trainX = dataSource.GetFeatures(predictionConfig.TrainDataFile, predictionConfig.NormaliseValues);
+            NDArray _trainY = dataSource.GetLabels(predictionConfig.TrainDataFile, predictionConfig.NormaliseValues);            
+            int n_samples = (int)_trainX.shape[0];
             
             // tf Graph Input
             var X = tf.placeholder(tf.float32, shape: (1, 2), name: "X");
@@ -56,8 +45,7 @@ namespace CFAIProcessor.Prediction
             var b = tf.Variable(new[] { -0.73f }, name: "bias");
 
             // Construct a linear model
-            var pred = tf.add(tf.multiply(X, W), b, name: "pred");
-            //var pred = tf.multiply(X, W);
+            var pred = tf.add(tf.multiply(X, W), b, name: "pred");        
             log.Log(DateTimeOffset.UtcNow, "Information", $"pred.name={pred.name}");
 
             // Mean squared error
@@ -81,15 +69,15 @@ namespace CFAIProcessor.Prediction
             // Fit all training data
             for (int epoch = 0; epoch < predictionConfig.TrainingEpochs; epoch++)
             {               
-                for(int itemIndex = 0; itemIndex < train_X.shape[0]; itemIndex++)
+                for(int itemIndex = 0; itemIndex < _trainX.shape[0]; itemIndex++)
                 {
-                    var train_X_item = train_X[itemIndex];
-                    var train_Y_item = train_Y[itemIndex];
+                    var train_X_item = _trainX[itemIndex];
+                    var train_Y_item = _trainY[itemIndex];
                     session.run(optimizer, (X, train_X_item), (Y, train_Y_item));
 
                     //log.Log(DateTimeOffset.UtcNow, "Information", $"Epoch: {epoch + 1} itemIIndex={itemIndex} " + $"W={session.run(W)} b={session.run(b)}");
 
-                    /*
+                    /* Works
                     var feedDict = new FeedDict();
                     feedDict.Add(X, train_X_item);
                     feedDict.Add(Y, train_Y_item);
@@ -114,22 +102,20 @@ namespace CFAIProcessor.Prediction
                 //}
 
                 // Display logs per epoch step
-                //if ((epoch + 1) % display_step == 0)
-                //{
-                    var c = session.run(cost, (X, train_X), (Y, train_Y));                    
-                    log.Log(DateTimeOffset.UtcNow, "Information", $"Epoch: {epoch + 1} cost={c} " + $"W={session.run(W)} b={session.run(b)}");
-                //}
+                if ((epoch + 1) % _displayStep == 0)
+                {
+                    var c = session.run(cost, (X, _trainX), (Y, _trainY));                    
+                    log.Log(DateTimeOffset.UtcNow, "Information", $"Epoch: {epoch + 1} cost={c}, W={session.run(W)} b={session.run(b)}");
+                }
             }
 
             log.Log(DateTimeOffset.UtcNow, "Information", "Optimization Finished!");
-            var training_cost = session.run(cost, (X, train_X), (Y, train_Y));
+            var training_cost = session.run(cost, (X, _trainX), (Y, _trainY));
             log.Log(DateTimeOffset.UtcNow, "Information", $"Training cost={training_cost} W={session.run(W)} b={session.run(b)}, name={training_cost.name}");
 
-            // Testing example
-            //var test_X = np.array(6.83f, 4.668f, 8.9f, 7.91f, 5.7f, 8.7f, 3.1f, 2.1f);
-            //var test_Y = np.array(1.84f, 2.273f, 3.2f, 2.831f, 2.92f, 3.24f, 1.35f, 1.03f);
-            var test_X = getFeaturesFunction(predictionConfig.TestDataFile);
-            var test_Y = getLabelsFunction(predictionConfig.TestDataFile);
+            // Testing example      
+            var test_X = dataSource.GetFeatures(predictionConfig.TestDataFile, predictionConfig.NormaliseValues);
+            var test_Y = dataSource.GetLabels(predictionConfig.TestDataFile, predictionConfig.NormaliseValues);
 
             log.Log(DateTimeOffset.UtcNow, "Information", "Testing... (Mean square loss Comparison)");
             var testing_cost = session.run(tf.reduce_sum(tf.pow(pred - Y, 2.0f)) / (2.0f * test_X.shape[0]),

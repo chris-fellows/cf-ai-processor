@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35913.81 d17.13
+VisualStudioVersion = 17.13.35913.81
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CFAIProcessor.UI", "CFAIProcessor.UI.csproj", "{848B5A10-D399-453E-B8A6-2EB4C53A78FF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CFAIProcessor.Common", "..\CFAIProcessor.Common\CFAIProcessor.Common.csproj", "{103D4303-2016-4FE6-B12D-50012239496E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CFAIProcessor.xUnit", "..\CFAIProcessor.xUnit\CFAIProcessor.xUnit.csproj", "{EAE287FE-4481-49B1-973D-821F721BEF73}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{103D4303-2016-4FE6-B12D-50012239496E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{103D4303-2016-4FE6-B12D-50012239496E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{103D4303-2016-4FE6-B12D-50012239496E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EAE287FE-4481-49B1-973D-821F721BEF73}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EAE287FE-4481-49B1-973D-821F721BEF73}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EAE287FE-4481-49B1-973D-821F721BEF73}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EAE287FE-4481-49B1-973D-821F721BEF73}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

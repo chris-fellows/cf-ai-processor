@@ -8,7 +8,7 @@ using System.IO;
 using Tensorflow.Keras.Engine;
 using static Tensorflow.Keras.Engine.InputSpec;
 
-namespace CFAIProcessor
+namespace CFAIProcessor.ImageChecker
 {
     public class ImageClassChecker
     {
