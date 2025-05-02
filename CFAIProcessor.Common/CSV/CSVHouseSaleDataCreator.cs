@@ -11,7 +11,7 @@ namespace CFAIProcessor.CSV
     {
         private List<CSVRowGroup> _rowGroups = new();
 
-        public void Create(string dataFile, char delimiter, int maxRecords)
+        public void Create(string dataFile, string configFile, char delimiter, int maxRecords)
         {
             _rowGroups = GetRowGroups();
 
@@ -20,15 +20,40 @@ namespace CFAIProcessor.CSV
             // Set config
             var config = new CSVDataConfig<HouseSaleData>()
             {
-                File = dataFile,
+                ConfigFile = configFile,   
+                DataFile = dataFile,
                 Delimiter = delimiter,
                 MaxRecords = maxRecords,
-                ColumnNames = new()
+                Columns = new List<CSVColumnConfig>()
                 {
-                    CSVHouseSaleDataColumnNames.NumberOfBeds,
-                    CSVHouseSaleDataColumnNames.SizeInSquareFeet,
-                    CSVHouseSaleDataColumnNames.SalePrice
-                },
+                    new CSVColumnConfig()
+                    {
+                        InternalName = CSVHouseSaleDataColumnNames.NumberOfBeds,
+                        ExternalName = CSVHouseSaleDataColumnNames.NumberOfBeds,
+                        IsFeature = true,
+                        IsLabel = false,
+                        MinValue = 1,
+                        MaxValue = 10
+                    },
+                    new CSVColumnConfig()
+                    {
+                        InternalName = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
+                        ExternalName = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
+                        IsFeature = true,
+                        IsLabel = false,
+                        MinValue = 1,
+                        MaxValue = 100000                        
+                    },
+                    new CSVColumnConfig()
+                    {
+                        InternalName = CSVHouseSaleDataColumnNames.SalePrice,
+                        ExternalName = CSVHouseSaleDataColumnNames.SalePrice,
+                        IsFeature = false,
+                        IsLabel = true,
+                        MinValue = 1,
+                        MaxValue = 2000000                        
+                    }
+                },                
                 CreateRandomEntity = () =>
                 {
                     return CreateRandomEntity(random, _rowGroups);
@@ -73,19 +98,19 @@ namespace CFAIProcessor.CSV
                 {
                     new CSVColumnConfig()
                     {
-                        Name = CSVHouseSaleDataColumnNames.NumberOfBeds,
+                        InternalName = CSVHouseSaleDataColumnNames.NumberOfBeds,
                         MinValue = 1,
                         MaxValue = 1,
                     },
                     new CSVColumnConfig()
                     {
-                        Name = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
+                        InternalName = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
                         MinValue = 1000,
                         MaxValue = 5000
                     },
                     new CSVColumnConfig()
                     {
-                        Name = CSVHouseSaleDataColumnNames.SalePrice,
+                        InternalName = CSVHouseSaleDataColumnNames.SalePrice,
                         MinValue = 100000,
                         MaxValue = 200000
                     },
@@ -99,19 +124,19 @@ namespace CFAIProcessor.CSV
                 {
                     new CSVColumnConfig()
                     {
-                        Name = CSVHouseSaleDataColumnNames.NumberOfBeds,
+                        InternalName = CSVHouseSaleDataColumnNames.NumberOfBeds,
                         MinValue = 2,
                         MaxValue = 2,
                     },
                     new CSVColumnConfig()
                     {
-                        Name = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
+                        InternalName = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
                         MinValue = 5000,
                         MaxValue = 9000
                     },
                     new CSVColumnConfig()
                     {
-                        Name = CSVHouseSaleDataColumnNames.SalePrice,
+                        InternalName = CSVHouseSaleDataColumnNames.SalePrice,
                         MinValue = 200000,
                         MaxValue = 300000
                     },
@@ -125,19 +150,19 @@ namespace CFAIProcessor.CSV
                 {
                     new CSVColumnConfig()
                     {
-                        Name = CSVHouseSaleDataColumnNames.NumberOfBeds,
+                        InternalName = CSVHouseSaleDataColumnNames.NumberOfBeds,
                         MinValue = 3,
                         MaxValue = 3,
                     },
                     new CSVColumnConfig()
                     {
-                        Name = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
+                        InternalName = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
                         MinValue = 10000,
                         MaxValue = 20000
                     },
                     new CSVColumnConfig()
                     {
-                        Name = CSVHouseSaleDataColumnNames.SalePrice,
+                        InternalName = CSVHouseSaleDataColumnNames.SalePrice,
                         MinValue = 300000,
                         MaxValue = 450000
                     },
@@ -151,19 +176,19 @@ namespace CFAIProcessor.CSV
                 {
                     new CSVColumnConfig()
                     {
-                        Name = CSVHouseSaleDataColumnNames.NumberOfBeds,
+                        InternalName = CSVHouseSaleDataColumnNames.NumberOfBeds,
                         MinValue = 4,
                         MaxValue = 4,
                     },
                     new CSVColumnConfig()
                     {
-                        Name = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
+                        InternalName = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
                         MinValue = 20000,
                         MaxValue = 30000,
                     },
                     new CSVColumnConfig()
                     {
-                        Name = CSVHouseSaleDataColumnNames.SalePrice,
+                        InternalName = CSVHouseSaleDataColumnNames.SalePrice,
                         MinValue = 450000,
                         MaxValue = 600000
                     },
@@ -177,19 +202,19 @@ namespace CFAIProcessor.CSV
                 {
                     new CSVColumnConfig()
                     {
-                        Name = CSVHouseSaleDataColumnNames.NumberOfBeds,
+                        InternalName = CSVHouseSaleDataColumnNames.NumberOfBeds,
                         MinValue = 5,
                         MaxValue = 5,
                     },
                     new CSVColumnConfig()
                     {
-                        Name = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
+                        InternalName = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
                         MinValue = 30000,
                         MaxValue = 40000,
                     },
                     new CSVColumnConfig()
                     {
-                        Name = CSVHouseSaleDataColumnNames.SalePrice,
+                        InternalName = CSVHouseSaleDataColumnNames.SalePrice,
                         MinValue = 600000,
                         MaxValue = 800000
                     },

@@ -1,5 +1,5 @@
 ﻿using CFAIProcessor.Constants;
-using CFAIProcessor.Interfaces;
+using CFAIProcessor.CSV;
 using CFAIProcessor.Logging;
 using CFAIProcessor.Models;
 using CFAIProcessor.Utilities;
@@ -16,9 +16,10 @@ namespace CFAIProcessor.Prediction
     /// <summary>
     /// Predicts house price because of learning data file of house sales
     /// </summary>
-    public class HousePricePrediction : IPredictionDataSource
+    public class HousePricePrediction
     {
-        public void Run(string trainDataFile, string testDataFile)
+        public void Run(string trainDataFile, string trainConfigFile,
+                        string testDataFile, string testConfigFile)
         {
             var logFile = "D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\Log\\Log.txt";
             Directory.CreateDirectory(Path.GetDirectoryName(logFile));
@@ -31,12 +32,18 @@ namespace CFAIProcessor.Prediction
                 LearningRate = 0.01f,                
                 IsImportingGraph = false,                
                 NormaliseValues = true,
-                TrainDataFile = trainDataFile,
+                TrainDataFile = trainDataFile,                
                 TestDataFile = testDataFile                
             };
 
+            // Set training data source
+            var trainDataSource = new CSVPredictionDataSource(trainDataFile, trainConfigFile);
+
+            // Set trsy data source
+            var testDataSource = new CSVPredictionDataSource(testDataFile, testConfigFile);
+
             var predictionNew = new PredictionProcessorV2();
-            predictionNew.Run(config, log, this);
+            predictionNew.Run(config, log, trainDataSource, testDataSource);
                                         
             var prediction2 = new PredictionProcessorSaved<HouseSaleData>();
             prediction2.Run(config, log);
@@ -47,92 +54,92 @@ namespace CFAIProcessor.Prediction
             int xx = 1000;
         }
 
-        public NDArray GetFeatures(string dataFile, bool normalise)
-        {
-            var items = GetData(dataFile);
+        //public NDArray GetFeatures(string dataFile, bool normalise)
+        //{
+        //    var items = GetData(dataFile);
 
-            var features = np.zeros((items.Count(), 2), Tensorflow.TF_DataType.TF_FLOAT);
+        //    var features = np.zeros((items.Count(), 2), Tensorflow.TF_DataType.TF_FLOAT);
 
-            var minNumberOfBeds = 1;
-            var maxNumberOfBeds = 10;
-            var minSquareFeet = 1;
-            var maxSquareFeet = 1000000;
+        //    var minNumberOfBeds = 1;
+        //    var maxNumberOfBeds = 10;
+        //    var minSquareFeet = 1;
+        //    var maxSquareFeet = 1000000;
            
-            int rowIndex = -1;
-            foreach(var item in items)
-            {
-                rowIndex++;              
-                features[rowIndex] = new[]
-                {
-                    normalise ? Convert.ToSingle(NumericUtilities.Normalize(item.NumberOfBeds, minNumberOfBeds, maxNumberOfBeds, 0, 1)) :
-                            Convert.ToSingle(item.NumberOfBeds),
-                    normalise ? Convert.ToSingle(NumericUtilities.Normalize(item.SizeInSquareFeet, minSquareFeet, maxSquareFeet, 0, 1)) : 
-                            Convert.ToSingle(item.SizeInSquareFeet)
-                };
-            }
+        //    int rowIndex = -1;
+        //    foreach(var item in items)
+        //    {
+        //        rowIndex++;              
+        //        features[rowIndex] = new[]
+        //        {
+        //            normalise ? Convert.ToSingle(NumericUtilities.Normalize(item.NumberOfBeds, minNumberOfBeds, maxNumberOfBeds, 0, 1)) :
+        //                    Convert.ToSingle(item.NumberOfBeds),
+        //            normalise ? Convert.ToSingle(NumericUtilities.Normalize(item.SizeInSquareFeet, minSquareFeet, maxSquareFeet, 0, 1)) : 
+        //                    Convert.ToSingle(item.SizeInSquareFeet)
+        //        };
+        //    }
 
-            return features;
-        }
+        //    return features;
+        //}
 
-        public NDArray GetLabels(string dataFile, bool normalise)
-        {
-            var items = GetData(dataFile);
+        //public NDArray GetLabels(string dataFile, bool normalise)
+        //{
+        //    var items = GetData(dataFile);
 
-            var labels = np.zeros((items.Count(), 1), Tensorflow.TF_DataType.TF_FLOAT);
+        //    var labels = np.zeros((items.Count(), 1), Tensorflow.TF_DataType.TF_FLOAT);
 
-            var minSalePrice = 1;
-            var maxSalePrice = 10000000;
+        //    var minSalePrice = 1;
+        //    var maxSalePrice = 10000000;
 
-            int rowIndex = -1;
-            foreach (var item in items)
-            {
-                rowIndex++;                
-                labels[rowIndex] = new[]
-                {
-                    normalise ? Convert.ToSingle(NumericUtilities.Normalize(item.SalePrice, minSalePrice, maxSalePrice, 0, 1)) : 
-                        Convert.ToSingle(item.SalePrice)
-                };                
-            }
+        //    int rowIndex = -1;
+        //    foreach (var item in items)
+        //    {
+        //        rowIndex++;                
+        //        labels[rowIndex] = new[]
+        //        {
+        //            normalise ? Convert.ToSingle(NumericUtilities.Normalize(item.SalePrice, minSalePrice, maxSalePrice, 0, 1)) : 
+        //                Convert.ToSingle(item.SalePrice)
+        //        };                
+        //    }
 
-            return labels;
-        }
+        //    return labels;
+        //}
 
-        private List<HouseSaleData> GetData(string dataFile)
-        {
-            if (!File.Exists(dataFile))
-            {
-                throw new FileNotFoundException("Data file does not exist", dataFile);
-            }
+        //private List<HouseSaleData> GetData(string dataFile)
+        //{
+        //    if (!File.Exists(dataFile))
+        //    {
+        //        throw new FileNotFoundException("Data file does not exist", dataFile);
+        //    }
 
-            var items = new List<HouseSaleData>();
+        //    var items = new List<HouseSaleData>();
 
-            using (var reader = new StreamReader(dataFile))
-            {
-                int lineCount = 0;
-                var headers = new List<string>();
-                while (!reader.EndOfStream)
-                {
-                    lineCount++;
-                    var line = reader.ReadLine();
-                    var elements = line.Split('\t');
-                    if (lineCount == 1)
-                    {
-                        headers = elements.ToList();
-                    }
-                    else
-                    {
-                        var item = new HouseSaleData()
-                        {
-                            NumberOfBeds = Convert.ToSingle(elements[headers.IndexOf(CSVHouseSaleDataColumnNames.NumberOfBeds)]),
-                            SizeInSquareFeet = Convert.ToSingle(elements[headers.IndexOf(CSVHouseSaleDataColumnNames.SizeInSquareFeet)]),
-                            SalePrice = Convert.ToSingle(elements[headers.IndexOf(CSVHouseSaleDataColumnNames.SalePrice)]),
-                        };
-                        items.Add(item);
-                    }
-                }
-            }
+        //    using (var reader = new StreamReader(dataFile))
+        //    {
+        //        int lineCount = 0;
+        //        var headers = new List<string>();
+        //        while (!reader.EndOfStream)
+        //        {
+        //            lineCount++;
+        //            var line = reader.ReadLine();
+        //            var elements = line.Split('\t');
+        //            if (lineCount == 1)
+        //            {
+        //                headers = elements.ToList();
+        //            }
+        //            else
+        //            {
+        //                var item = new HouseSaleData()
+        //                {
+        //                    NumberOfBeds = Convert.ToSingle(elements[headers.IndexOf(CSVHouseSaleDataColumnNames.NumberOfBeds)]),
+        //                    SizeInSquareFeet = Convert.ToSingle(elements[headers.IndexOf(CSVHouseSaleDataColumnNames.SizeInSquareFeet)]),
+        //                    SalePrice = Convert.ToSingle(elements[headers.IndexOf(CSVHouseSaleDataColumnNames.SalePrice)]),
+        //                };
+        //                items.Add(item);
+        //            }
+        //        }
+        //    }
 
-            return items;
-        }
+        //    return items;
+        //}
     }
 }

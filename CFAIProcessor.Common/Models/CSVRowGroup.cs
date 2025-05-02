@@ -9,6 +9,6 @@
 
         public List<CSVColumnConfig> ColumnConfigs { get; set; } = new List<CSVColumnConfig>();
 
-        public CSVColumnConfig ColumnConfig(string name) => ColumnConfigs.First(c => c.Name == name);        
+        public CSVColumnConfig ColumnConfig(string name) => ColumnConfigs.First(c => c.InternalName == name || c.ExternalName == name);        
     }
 }

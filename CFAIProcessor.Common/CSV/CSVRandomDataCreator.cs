@@ -1,6 +1,8 @@
 ﻿using CFAIProcessor.Models;
+using CFAIProcessor.Utilities;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,20 +13,28 @@ namespace CFAIProcessor.CSV
     {
         public void Create<TEntityType>(CSVDataConfig<TEntityType> config)
         {
-            if (File.Exists(config.File))
+            if (File.Exists(config.DataFile))
             {
-                File.Delete(config.File);
+                File.Delete(config.DataFile);
+            }
+            if (File.Exists(config.ConfigFile))
+            {
+                File.Delete(config.ConfigFile);
             }
 
-            using (var streamWriter = new StreamWriter(config.File))
+            using (var streamWriter = new StreamWriter(config.DataFile))
             {
                 var line = new StringBuilder("");
 
+                var csvConfig = new CSVConf() { Columns = new() };
+
                 // Write columns
-                foreach(var columnName in config.ColumnNames)
+                foreach(var column in config.Columns)
                 {
                     if (line.Length > 0) line.Append(config.Delimiter);
-                    line.Append(columnName);
+                    line.Append(column.InternalName);
+
+                    csvConfig.Columns.Add(column);
                 }
                 streamWriter.WriteLine(line.ToString());
 
@@ -45,6 +55,9 @@ namespace CFAIProcessor.CSV
                     streamWriter.WriteLine(line.ToString());
                     line.Length = 0;
                 }
+
+                // Save config
+                File.WriteAllText(config.ConfigFile, JsonUtilities.SerializeToString(csvConfig, JsonUtilities.DefaultJsonSerializerOptions));
             }
         }
     }
