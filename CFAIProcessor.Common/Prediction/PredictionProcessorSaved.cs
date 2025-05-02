@@ -18,11 +18,18 @@ namespace CFAIProcessor.Prediction
         {
             tf.compat.v1.disable_eager_execution();
 
-            var savePath = $"D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\PredictionModel\\";
+            //var model = tf.keras.models.load_model(predictionConfig.ModelFolder);
+            var modelTest = tf.saved_model.load(predictionConfig.ModelFolder + "\\");            
+            
+            
+
+            var savePath = $"D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\PredictionModel\\"; 
+                       
 
             // https://cv-tricks.com/tensorflow-tutorial/save-restore-tensorflow-models-quick-complete-tutorial/
             using var session = tf.Session();               
-            var saver = tf.train.import_meta_graph(Path.Combine(savePath, "MyModel.meta"));
+            var saver = tf.train.import_meta_graph(Path.Combine(savePath, "DefaultModel.meta"));                        
+
             saver.restore(session, tf.train.latest_checkpoint(savePath));
 
             //saver.restore(session, tf.train.latest_checkpoint("./"));
@@ -31,13 +38,13 @@ namespace CFAIProcessor.Prediction
             var Y = session.graph.get_tensor_by_name("placeholderY:0");
 
             var W = session.graph.get_tensor_by_name("weight:0");            
-            var b = session.graph.get_tensor_by_name("bias:0");
+            var b = session.graph.get_tensor_by_name("bias:0");         
 
             //var result1 = session.run(W);
 
-            //var optimizer = session.graph.get_operation_by_name("GradientDescent");
+            //var optimizer = session.graph.get_operation_by_name("GradientDescent");            
 
-            var pred = session.graph.get_tensor_by_name("pred:0");
+            var pred = session.graph.get_tensor_by_name("pred:0");            
                         
             // Testing example
             var test_X = np.array(6.83f, 4.668f, 8.9f, 7.91f, 5.7f, 8.7f, 3.1f, 2.1f);

@@ -1,4 +1,5 @@
 ﻿using CFAIProcessor.Constants;
+using CFAIProcessor.Interfaces;
 using CFAIProcessor.Models;
 using CFAIProcessor.Utilities;
 
@@ -7,11 +8,11 @@ namespace CFAIProcessor.CSV
     /// <summary>
     /// Creates CSV house sale data using random data
     /// </summary>
-    public class CSVHouseSaleDataCreator
+    public class CSVHouseSaleDataCreator : ICSVDataCreator
     {
         private List<CSVRowGroup> _rowGroups = new();
 
-        public void Create(string dataFile, string configFile, char delimiter, int maxRecords)
+        public void Create(string dataFile, string configFile, char delimiter, int maxRecords, string[]? columnNames)
         {
             _rowGroups = GetRowGroups();
 
@@ -60,14 +61,26 @@ namespace CFAIProcessor.CSV
                 },
                 GetColumnValues = (houseSaleData) =>
                 {
-                    return new[]
+                    var values = new List<string>();
+                    if (columnNames == null || columnNames.Length == 0 || columnNames.Contains(CSVHouseSaleDataColumnNames.NumberOfBeds))
                     {
-                        houseSaleData.NumberOfBeds.ToString(),
-                        houseSaleData.SizeInSquareFeet.ToString(),
-                        houseSaleData.SalePrice.ToString()
-                    };
+                        values.Add(houseSaleData.NumberOfBeds.ToString());
+                    }
+                    if (columnNames == null || columnNames.Length == 0 || columnNames.Contains(CSVHouseSaleDataColumnNames.SizeInSquareFeet))
+                    {
+                        values.Add(houseSaleData.SizeInSquareFeet.ToString());
+                    }
+                    if (columnNames == null || columnNames.Length == 0 || columnNames.Contains(CSVHouseSaleDataColumnNames.SalePrice))
+                    {
+                        values.Add(houseSaleData.SalePrice.ToString());
+                    }
+                    return values.ToArray();                   
                 }
             };
+            if (columnNames != null && columnNames.Length > 0)
+            {
+                config.Columns.RemoveAll(c => !columnNames.Contains(c.InternalName));                
+            }
 
             // Create data
             var creator = new CSVRandomDataCreator();

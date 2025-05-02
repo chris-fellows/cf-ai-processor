@@ -26,7 +26,7 @@ namespace CFAIProcessor.CSV
             {
                 var line = new StringBuilder("");
 
-                var csvConfig = new CSVConf() { Columns = new() };
+                var csvConfig = new CSVConfig() { Columns = new() };
 
                 // Write columns
                 foreach(var column in config.Columns)

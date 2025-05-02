@@ -3,7 +3,7 @@
     /// <summary>
     /// Configuration of a CSV file
     /// </summary>
-    internal class CSVConf
+    public class CSVConfig
     {
         public List<CSVColumnConfig> Columns { get; set; } = new();
     }

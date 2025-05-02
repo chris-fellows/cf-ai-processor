@@ -3,7 +3,7 @@
     /// <summary>
     /// Config for CSV column
     /// </summary>
-    internal class CSVColumnConfig
+    public class CSVColumnConfig
     {
         /// <summary>
         /// Name in CSV file

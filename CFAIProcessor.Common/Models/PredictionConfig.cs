@@ -3,13 +3,13 @@
     /// <summary>
     /// Prediction config
     /// </summary>
-    internal class PredictionConfig
+    public class PredictionConfig
     {
         public string Name { get; set; } = String.Empty;
 
-        public string TrainDataFile { get; set; } = String.Empty;
-
-        public string TestDataFile { get; set; } = String.Empty;
+        public int? MaxTrainRows { get; set; }
+        
+        public int? MaxTestRows { get; set; }
 
         public int TrainingEpochs { get; set; } = 1000;
 

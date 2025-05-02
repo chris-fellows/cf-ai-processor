@@ -1,0 +1,80 @@
+﻿@page "/prediction"
+@using CFAIProcessor.Constants
+@using CFAIProcessor.Interfaces
+@using CFAIProcessor.Models
+@using CFAIProcessor.SystemTask
+@inject ISystemTaskList SystemTaskList
+@inject NavigationManager NavigationManager
+
+<h1>Create</h1>
+
+<h2>Tag</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="PredictionRequest" OnValidSubmit="ExecutePredict" FormName="prediction" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert" />
+
+            <div class="mb-3">                
+                <InputFile id="imagefile" OnChange="OnInputFileChangeAsync" />
+            </div>
+            <button type="submit" class="btn btn-primary">Execute</button>
+        </EditForm>
+    </div>
+</div>
+
+
+@code {
+    [SupplyParameterFromForm]
+    private PredictionRequest PredictionRequest { get; set; } = new() { Id = Guid.NewGuid().ToString() };
+
+    private string _inputFile = String.Empty;
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task ExecutePredict()
+    {
+        PredictionRequest.Id = Guid.NewGuid().ToString();
+        PredictionRequest.InputFile = _inputFile;
+
+        // Add system task request
+        var systemTaskRequest = new SystemTaskRequest(DateTimeOffset.MinValue,
+                new Dictionary<string, object>()
+                {
+                    { "PredictionRequest", PredictionRequest }
+                },
+                SystemTaskTypeNames.RunPrediction);
+        SystemTaskList.AddRequest(systemTaskRequest);
+
+        NavigationManager.NavigateTo("/");
+    }
+
+    private async Task OnInputFileChangeAsync(InputFileChangeEventArgs eventArgs)
+    {
+        // // Check file size
+        // if (eventArgs.File.Size > ConfigUtilities.MaxUploadImageSize)
+        // {
+        //     throw new ArgumentException("File is too big");
+        // }
+
+        // Save to local file
+        using (var stream = eventArgs.File.OpenReadStream())
+        {
+            _inputFile = Path.Combine(Path.GetTempPath(), $"{PredictionRequest.Id}{Path.GetExtension(eventArgs.File.Name)}");
+            using (var streamWriter = new FileStream(_inputFile, FileMode.Create))
+            {
+                await stream.CopyToAsync(streamWriter);
+            }
+
+            /*
+            // Check that file can be uploaded
+            var content = File.ReadAllBytes(_inputFile);
+            if (!(await FileSecurityCheckerService.ValidateCanUploadImageAsync(content)))
+            {
+                File.Delete(_inputFile);
+                _inputFile = "";
+                }
+            */
+        }
+    }
+}

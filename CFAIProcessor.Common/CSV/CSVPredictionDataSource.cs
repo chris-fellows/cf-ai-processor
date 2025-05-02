@@ -12,26 +12,20 @@ namespace CFAIProcessor.CSV
     internal class CSVPredictionDataSource : IPredictionDataSource
     {
         private string _dataFile { get; set; } = string.Empty;        
-        private readonly CSVConf _csvConfig;
+        private readonly CSVConfig _csvConfig;
 
-        public CSVPredictionDataSource(string dataFile, string  configFile)
+        public CSVPredictionDataSource(string dataFile, CSVConfig csvConfig)
         {
-            _dataFile = dataFile;           
+            _dataFile = dataFile;
+            _csvConfig = csvConfig;
 
             if (!File.Exists(_dataFile))
             {
                 throw new FileNotFoundException("Data file does not exist", _dataFile);
-            }
-
-            if (!File.Exists(configFile))
-            {
-                throw new FileNotFoundException("Config file does not exist", configFile);
-            }
-
-            _csvConfig = JsonUtilities.DeserializeFromString<CSVConf>(File.ReadAllText(configFile), JsonUtilities.DefaultJsonSerializerOptions);
+            }                        
         }
 
-        public NDArray GetFeatureValues(bool normalise)
+        public NDArray GetFeatureValues(bool normalise, int? maxRows)
         {
             var dataTable = GetDataAsDataTable(_dataFile);
             
@@ -59,7 +53,10 @@ namespace CFAIProcessor.CSV
                     }
                 }
 
-                features[rowIndex] = rowValues;                
+                features[rowIndex] = rowValues;
+
+                // Exit if row limit set
+                if (maxRows != null && rowIndex + 1 >= maxRows) break;
             }
 
             return features;
@@ -67,18 +64,13 @@ namespace CFAIProcessor.CSV
 
         public string[] FeatureNames => _csvConfig.Columns.Where(c => c.IsFeature).Select(c => c.InternalName).ToArray();
 
-        public NDArray GetLabelValues(bool normalise)
+        public NDArray GetLabelValues(bool normalise, int? maxRows)
         {
             var dataTable = GetDataAsDataTable(_dataFile);
             
             var labelColumns = _csvConfig.Columns.Where(c => c.IsLabel).ToList();
 
-            var labels = np.zeros((dataTable.Rows.Count, labelColumns.Count), Tensorflow.TF_DataType.TF_FLOAT);
-
-            //var labels = np.zeros((items.Count(), 1), Tensorflow.TF_DataType.TF_FLOAT);
-
-            //var minSalePrice = 1;
-            //var maxSalePrice = 10000000;
+            var labels = np.zeros((dataTable.Rows.Count, labelColumns.Count), Tensorflow.TF_DataType.TF_FLOAT);          
 
             for (int rowIndex = 0; rowIndex < dataTable.Rows.Count; rowIndex++)
             {
@@ -110,18 +102,10 @@ namespace CFAIProcessor.CSV
                             Convert.ToSingle(item.SizeInSquareFeet)
                 };
                 */
-            }
 
-            //int rowIndex = -1;
-            //foreach (var item in items)
-            //{
-            //    rowIndex++;
-            //    labels[rowIndex] = new[]
-            //    {
-            //        normalise ? Convert.ToSingle(NumericUtilities.Normalize(item.SalePrice, minSalePrice, maxSalePrice, 0, 1)) :
-            //            Convert.ToSingle(item.SalePrice)
-            //    };
-            //}
+                // Exit if row limit set
+                if (maxRows != null && rowIndex + 1 >= maxRows) break;                
+            }
 
             return labels;
         }

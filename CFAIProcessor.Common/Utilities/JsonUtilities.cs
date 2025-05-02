@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace CFAIProcessor.Utilities
 {
-    internal class JsonUtilities
+    public static class JsonUtilities
     {
         public static JsonSerializerOptions DefaultJsonSerializerOptions
         {

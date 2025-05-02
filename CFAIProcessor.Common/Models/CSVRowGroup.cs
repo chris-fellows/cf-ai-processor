@@ -3,7 +3,7 @@
     /// <summary>
     /// Defines config for a group of CSV rows. The group may have specific range for each column value.
     /// </summary>
-    internal class CSVRowGroup
+    public class CSVRowGroup
     {        
         public string Name { get; set; } = String.Empty;
 

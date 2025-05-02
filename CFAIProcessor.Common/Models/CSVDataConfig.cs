@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CFAIProcessor.Models
 {
-    internal class CSVDataConfig<TEntityType>
+    public class CSVDataConfig<TEntityType>
     {
         public string ConfigFile { get; set; } = String.Empty;
         public string DataFile { get; set; } = String.Empty;

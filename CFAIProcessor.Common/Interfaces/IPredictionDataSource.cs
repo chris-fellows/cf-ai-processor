@@ -6,14 +6,14 @@ namespace CFAIProcessor.Interfaces
     /// <summary>
     /// Data source for prediction
     /// </summary>
-    internal interface IPredictionDataSource
+    public interface IPredictionDataSource
     {
         /// <summary>
         /// Gets feature values, normalises if required
         /// </summary>
         /// <param name="normalise"></param>
         /// <returns></returns>
-        NDArray GetFeatureValues(bool normalise);
+        NDArray GetFeatureValues(bool normalise, int? maxRows);
 
         /// <summary>
         /// Gets feature names
@@ -33,7 +33,7 @@ namespace CFAIProcessor.Interfaces
         /// </summary>
         /// <param name="normalise"></param>
         /// <returns></returns>
-        NDArray GetLabelValues(bool normalise);
+        NDArray GetLabelValues(bool normalise, int? maxRows);
 
         /// <summary>
         /// Get label names

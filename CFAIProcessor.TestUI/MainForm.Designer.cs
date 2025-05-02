@@ -1,4 +1,4 @@
-﻿namespace CFAIProcessor.UI
+﻿namespace CFAIProcessor.TestUI
 {
     partial class MainForm
     {

@@ -27,8 +27,8 @@ namespace CFAIProcessor.Prediction
         {
             tf.compat.v1.disable_eager_execution();
 
-            NDArray _trainX = trainDataSource.GetFeatureValues(predictionConfig.NormaliseValues);
-            NDArray _trainY = trainDataSource.GetLabelValues(predictionConfig.NormaliseValues);            
+            NDArray _trainX = trainDataSource.GetFeatureValues(predictionConfig.NormaliseValues, predictionConfig.MaxTrainRows);
+            NDArray _trainY = trainDataSource.GetLabelValues(predictionConfig.NormaliseValues, predictionConfig.MaxTrainRows);            
             var trainItemCount = (int)_trainX.shape[0];
             var trainFeatureCount = (int)_trainX.shape[1];
             var trainLabelCount = (int)_trainY.shape[1];            
@@ -123,13 +123,11 @@ namespace CFAIProcessor.Prediction
 
             log.Log(DateTimeOffset.UtcNow, "Information", "Optimization Finished!");
             var trainCost = session.run(cost, (X, _trainX), (Y, _trainY));
-            log.Log(DateTimeOffset.UtcNow, "Information", $"Training cost={trainCost}, Weight={session.run(W)}, Bias={session.run(b)}, Name={trainCost.name}");
+            log.Log(DateTimeOffset.UtcNow, "Information", $"Training cost={trainCost}, Weight={session.run(W)}, Bias={session.run(b)}, Name={trainCost.name}");         
 
             // Testing example      
-            var testX = testDataSource.GetFeatureValues(predictionConfig.NormaliseValues);
-            var testY = testDataSource.GetLabelValues(predictionConfig.NormaliseValues);
-            
-            //var predictionResult = session.run(prediction, (X, testX), (Y, testY));
+            var testX = testDataSource.GetFeatureValues(predictionConfig.NormaliseValues, predictionConfig.MaxTestRows);
+            var testY = testDataSource.GetLabelValues(predictionConfig.NormaliseValues, predictionConfig.MaxTrainRows);                       
             
             log.Log(DateTimeOffset.UtcNow, "Information", "Testing... (Mean square loss Comparison)");
             var testCost = session.run(tf.reduce_sum(tf.pow(prediction - Y, 2.0f)) / (2.0f * testX.shape[0]),
@@ -138,18 +136,29 @@ namespace CFAIProcessor.Prediction
             var difference = Math.Abs((float)trainCost - (float)testCost);
             log.Log(DateTimeOffset.UtcNow, "Information", $"Absolute mean square loss difference: {difference}");
 
+            ////var predictionResult = session.run(prediction, (X, testX), (Y, testY));
             //var myTestCost = tf.reduce_sum(tf.pow(prediction - Y, 2.0f)) / (2.0f * testX.shape[0]);
             //for (int itemIndex = 0; itemIndex < testX.shape[0]; itemIndex++)
             //{
             //    var testX_item = testX[itemIndex];
             //    var testY_item = testY[itemIndex];
-            //    var myTestResult = session.run(myTestCost, (X, testX_item), (Y, testY_item));
+            //    var myTestResult = session.run(prediction, (X, testX_item));
+            //    //var myTestResult = session.run(myTestCost, (X, testX_item), (Y, testY_item));
+
+            //    var oldTestXValue0 = testDataSource.GetNonNormalisedFeatureValue(0, testX_item[0]);
+            //    var oldTestXValue1 = testDataSource.GetNonNormalisedFeatureValue(1, testX_item[1]);
+            //    //var oldTestYValue0 = testDataSource.GetNonNormalisedLabelValue(0, testY_item[0]);
+
             //    int zzz = 1000;
             //}
 
-            //var savePath = $"D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\PredictionModel\\MyModel";
-            //var saver = tf.train.Saver();
-            //saver.save(session, savePath);
+            //var savePath = $"D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\PredictionModel\\MyModel";            
+
+            if (!String.IsNullOrEmpty(predictionConfig.ModelFolder))
+            {
+                var saver = tf.train.Saver();
+                saver.save(session, Path.Combine(predictionConfig.ModelFolder, "DefaultModel"));
+            }
 
             return difference < 0.01;
         }                

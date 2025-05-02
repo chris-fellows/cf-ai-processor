@@ -16,7 +16,7 @@ namespace CFAIProcessor.Prediction
     /// Original code with minor modifications
     /// </summary>
     /// <typeparam name="TEntityType"></typeparam>
-    internal class PredictionProcessorV1<TEntityType>
+    internal class PredictionProcessorV1
     {              
         private int _displayStep = 50;
         private NDArray? _trainX;
@@ -76,6 +76,8 @@ namespace CFAIProcessor.Prediction
                 }
             }            
 
+            
+
             log.Log(DateTimeOffset.UtcNow, "Information", "Optimization Finished!");
             var training_cost = session.run(cost, (X, _trainX), (Y, _trainY));            
             log.Log(DateTimeOffset.UtcNow, "Information", $"Training cost={training_cost} W={session.run(W)} b={session.run(b)}, name={training_cost.name}");                        
@@ -90,9 +92,14 @@ namespace CFAIProcessor.Prediction
             var difference = Math.Abs((float)training_cost - (float)testing_cost);
             log.Log(DateTimeOffset.UtcNow, "Information", $"Absolute mean square loss difference: {difference}");
 
-            var savePath = $"D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\PredictionModel\\MyModel";
-            var saver = tf.train.Saver();
-            saver.save(session, savePath);
+            // Save model
+            if (!String.IsNullOrEmpty(predictionConfig.ModelFolder))
+            {
+                //var savePath = $"D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\PredictionModel\\MyModel";
+                var savePath = Path.Combine(predictionConfig.ModelFolder, "MyModel");
+                var saver = tf.train.Saver();
+                saver.save(session, savePath);
+            }
 
             return difference < 0.01;
         }

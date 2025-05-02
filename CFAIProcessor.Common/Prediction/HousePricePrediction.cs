@@ -18,7 +18,7 @@ namespace CFAIProcessor.Prediction
     /// </summary>
     public class HousePricePrediction
     {
-        public void Run(string trainDataFile, string trainConfigFile,
+        public void RunTrainModel(string trainDataFile, string trainConfigFile,
                         string testDataFile, string testConfigFile)
         {
             var logFile = "D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\Log\\Log.txt";
@@ -29,27 +29,61 @@ namespace CFAIProcessor.Prediction
             {
                 Name = "Linear Regression (Graph)",
                 TrainingEpochs = 1000,
-                LearningRate = 0.01f,                
-                IsImportingGraph = false,                
+                LearningRate = 0.01f,
+                IsImportingGraph = false,
                 NormaliseValues = true,
-                TrainDataFile = trainDataFile,                
-                TestDataFile = testDataFile                
+                TrainDataFile = trainDataFile,
+                MaxTrainRows = null,        // All training rows
+                TestDataFile = testDataFile,
+                MaxTestRows = null,         // All test rows
+                ModelFolder = $"D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\PredictionModel"
             };
+
+            //var savePath = $"D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\PredictionModel\\MyModel";
 
             // Set training data source
             var trainDataSource = new CSVPredictionDataSource(trainDataFile, trainConfigFile);
 
-            // Set trsy data source
+            // Set ttest data source
             var testDataSource = new CSVPredictionDataSource(testDataFile, testConfigFile);
 
+            var predictionV3 = new PredictionProcessorV3();
+            predictionV3.Run(config, trainDataSource, testDataSource);
+
+            // Run model create
             var predictionNew = new PredictionProcessorV2();
             predictionNew.Run(config, log, trainDataSource, testDataSource);
                                         
             var prediction2 = new PredictionProcessorSaved<HouseSaleData>();
             prediction2.Run(config, log);
 
-            var prediction = new PredictionProcessorV1<HouseSaleData>();
+            var prediction = new PredictionProcessorV1();
             prediction.Run(config, log);
+
+            int xx = 1000;
+        }
+
+        public void RunPredictModel(string trainDataFile, string trainConfigFile,
+                   string testDataFile, string testConfigFile)
+        {
+            var logFile = "D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\Log\\Log.txt";
+            Directory.CreateDirectory(Path.GetDirectoryName(logFile));
+            var log = new SimpleLogCSV(logFile);
+
+            var config = new PredictionConfig
+            {
+                Name = "Linear Regression (Graph)",
+                TrainingEpochs = 1000,
+                LearningRate = 0.01f,
+                IsImportingGraph = false,
+                NormaliseValues = true,
+                TrainDataFile = trainDataFile,
+                TestDataFile = testDataFile,
+                ModelFolder = $"D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\PredictionModel"
+            };
+            
+            var prediction2 = new PredictionProcessorSaved<HouseSaleData>();
+            prediction2.Run(config, log);
 
             int xx = 1000;
         }
@@ -64,7 +98,7 @@ namespace CFAIProcessor.Prediction
         //    var maxNumberOfBeds = 10;
         //    var minSquareFeet = 1;
         //    var maxSquareFeet = 1000000;
-           
+
         //    int rowIndex = -1;
         //    foreach(var item in items)
         //    {
