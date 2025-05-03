@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CFAIProcessor.TestUI", "CFA
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CFAIProcessor.UI", "..\CFAIProcessor.UI\CFAIProcessor.UI.csproj", "{BDB766A2-0D23-4324-A23D-6659CF811286}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CFUtilities", "..\..\cf-utilities-core\CFUtilities\CFUtilities.csproj", "{523E8A92-10A1-724B-D867-1EEF95AE4C96}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CFCSV", "..\..\cf-csv\CFCSV\CFCSV.csproj", "{5631018B-A82B-4545-C9F5-241C799476AC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,14 @@ Global
 		{BDB766A2-0D23-4324-A23D-6659CF811286}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BDB766A2-0D23-4324-A23D-6659CF811286}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BDB766A2-0D23-4324-A23D-6659CF811286}.Release|Any CPU.Build.0 = Release|Any CPU
+		{523E8A92-10A1-724B-D867-1EEF95AE4C96}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{523E8A92-10A1-724B-D867-1EEF95AE4C96}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{523E8A92-10A1-724B-D867-1EEF95AE4C96}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{523E8A92-10A1-724B-D867-1EEF95AE4C96}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5631018B-A82B-4545-C9F5-241C799476AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5631018B-A82B-4545-C9F5-241C799476AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5631018B-A82B-4545-C9F5-241C799476AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5631018B-A82B-4545-C9F5-241C799476AC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

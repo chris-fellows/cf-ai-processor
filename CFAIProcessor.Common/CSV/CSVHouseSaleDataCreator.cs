@@ -89,8 +89,10 @@ namespace CFAIProcessor.CSV
 
         private static HouseSaleData CreateRandomEntity(Random random, List<CSVRowGroup> rowGroups)
         {
-            // Get random row group
-            var rowGroup = rowGroups[random.Next(0, rowGroups.Count - 1)];
+            // Get random row group, ideally weighted random
+            var rowGroup = rowGroups.Any(rg => rg.RandomSelectionProportion > 0) ?
+                            NumericUtilities.GetWeightedRandom(rowGroups, rowGroups.Select(rg => rg.RandomSelectionProportion).ToList()) :
+                            rowGroups[random.Next(0, rowGroups.Count - 1)];
 
             return new HouseSaleData()
             {
@@ -107,6 +109,7 @@ namespace CFAIProcessor.CSV
             rowGroups.Add(new CSVRowGroup()
             {
                 Name = "1 bed",
+                RandomSelectionProportion = 0.20,
                 ColumnConfigs = new List<CSVColumnConfig>()
                 {
                     new CSVColumnConfig()
@@ -119,13 +122,13 @@ namespace CFAIProcessor.CSV
                     {
                         InternalName = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
                         MinValue = 1000,
-                        MaxValue = 5000
+                        MaxValue = 6000
                     },
                     new CSVColumnConfig()
                     {
                         InternalName = CSVHouseSaleDataColumnNames.SalePrice,
                         MinValue = 100000,
-                        MaxValue = 200000
+                        MaxValue = 230000
                     },
                 }
             });
@@ -133,6 +136,7 @@ namespace CFAIProcessor.CSV
             rowGroups.Add(new CSVRowGroup()
             {
                 Name = "2 bed",
+                RandomSelectionProportion = 0.30,
                 ColumnConfigs = new List<CSVColumnConfig>()
                 {
                     new CSVColumnConfig()
@@ -144,13 +148,13 @@ namespace CFAIProcessor.CSV
                     new CSVColumnConfig()
                     {
                         InternalName = CSVHouseSaleDataColumnNames.SizeInSquareFeet,
-                        MinValue = 5000,
+                        MinValue = 3000,
                         MaxValue = 9000
                     },
                     new CSVColumnConfig()
                     {
                         InternalName = CSVHouseSaleDataColumnNames.SalePrice,
-                        MinValue = 200000,
+                        MinValue = 180000,
                         MaxValue = 300000
                     },
                 }
@@ -159,6 +163,7 @@ namespace CFAIProcessor.CSV
             rowGroups.Add(new CSVRowGroup()
             {
                 Name = "3 bed",
+                RandomSelectionProportion = 0.30,
                 ColumnConfigs = new List<CSVColumnConfig>()
                 {
                     new CSVColumnConfig()
@@ -185,6 +190,7 @@ namespace CFAIProcessor.CSV
             rowGroups.Add(new CSVRowGroup()
             {
                 Name = "4 bed",
+                RandomSelectionProportion = 0.10,
                 ColumnConfigs = new List<CSVColumnConfig>()
                 {
                     new CSVColumnConfig()
@@ -203,7 +209,7 @@ namespace CFAIProcessor.CSV
                     {
                         InternalName = CSVHouseSaleDataColumnNames.SalePrice,
                         MinValue = 450000,
-                        MaxValue = 600000
+                        MaxValue = 700000
                     },
                 }
             });
@@ -211,6 +217,7 @@ namespace CFAIProcessor.CSV
             rowGroups.Add(new CSVRowGroup()
             {
                 Name = "5 bed",
+                RandomSelectionProportion = 0.10,
                 ColumnConfigs = new List<CSVColumnConfig>()
                 {
                     new CSVColumnConfig()

@@ -25,6 +25,7 @@ namespace CFAIProcessor.Prediction
         public void Run(PredictionConfig predictionConfig,
                         IPredictionDataSource trainDataSource,
                         IPredictionDataSource testDataSource,
+                        IPredictionOutputFile predictionOutputFile,
                         CancellationToken cancellationToken)
         {
             // https://scisharp.github.io/Keras.NET/
@@ -69,16 +70,43 @@ namespace CFAIProcessor.Prediction
             //var testX = trainX[0];
             var prediction = model.predict(testX);
 
-            // Check prediction results
+            // Check prediction results.
+            // To predict CSV then we write test features, test labels & predicted labels
             var predictionValues = prediction.numpy();
             int rowIndex = -1;
 
             float totalPredictedValue = 0;
             float totalActualValue = 0;
-
             foreach(var predictedValueCurrent in predictionValues)
             {
                 rowIndex++;
+
+                // Set row features (Actual)
+                var rowFeatures = new List<float>();
+                for (int featureIndex = 0; featureIndex < testX[rowIndex].shape.dims[0]; featureIndex++)
+                {
+                    var featureValue = (float)testX[rowIndex][featureIndex];
+                    if (predictionConfig.NormaliseValues)
+                    {
+                        featureValue = testDataSource.GetNonNormalisedFeatureValue(featureIndex, featureValue);
+                    }
+                    rowFeatures.Add(featureValue);
+                }
+
+                // Set row labels (Actual)                
+                var rowLabels = new List<float>();
+                for (int labelIndex = 0; labelIndex < testY[rowIndex].shape.dims[0]; labelIndex++)
+                {
+                    var labelValue = (float)testY[rowIndex][labelIndex];
+                    if (predictionConfig.NormaliseValues)
+                    {
+                        labelValue = testDataSource.GetNonNormalisedLabelValue(labelIndex, labelValue);
+                    }
+                    rowLabels.Add(labelValue);
+                }
+
+                // Check predicted vs actual
+                var rowLabelsPredicted = new List<float>();               
                 for (var labelIndex = 0; labelIndex < predictedValueCurrent.shape.dims[0]; labelIndex++)
                 {
                     float predictedValue = predictedValueCurrent[labelIndex];
@@ -94,15 +122,22 @@ namespace CFAIProcessor.Prediction
                     totalPredictedValue += predictedValue;
                     totalActualValue += actualValue;
 
-                    var valueDifference = Math.Abs(predictedValue - actualValue);
-                    int zzzz = 1000;
+                    rowLabelsPredicted.Add(predictedValue);
+
+                    var valueDifference = Math.Abs(predictedValue - actualValue);                    
                 }
+
+                // Write results to prediction output
+                predictionOutputFile.Write(rowFeatures.ToArray(), rowLabels.ToArray(), rowLabelsPredicted.ToArray());
             }
 
             var averageDiff = Math.Abs(totalPredictedValue - totalActualValue) / rowIndex + 1;
-          
+
             // Save model
-            model.save(predictionConfig.ModelFolder);
+            if (!String.IsNullOrEmpty(predictionConfig.ModelFolder))
+            {
+                model.save(predictionConfig.ModelFolder);
+            }
             
             //https://github.com/TomasMantero/Predicting-House-Prices-Keras-ANN/blob/master/Predicting%20House%20Prices%20(Keras%20-%20ANN)%20(Version%205).ipynb                      
         }

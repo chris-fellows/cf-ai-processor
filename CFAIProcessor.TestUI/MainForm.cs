@@ -13,10 +13,29 @@ namespace CFAIProcessor.TestUI
         {
             InitializeComponent();
 
-            string folder = "D:\\Data\\Dev\\C#\\cf-ai-processor-local";
-            //CreateHouseSalePredictData(folder);
+            TestWeightedRandom();
 
-            int xxx = 1000;
+            //string folder = "D:\\Data\\Dev\\C#\\cf-ai-processor-local";
+            //CreateHouseSalePredictData(folder);       
+        }
+
+        private void TestWeightedRandom()
+        {
+            var items = new List<string>() { "One", "Two", "Three", "Four", "Five" };
+            var proportions = new List<double>() { 0.1, 0.1, 0.60, 0.1, 0.1 };
+            var countsByItem = new Dictionary<string, int>();
+            foreach (var item in items)
+            {
+                countsByItem.Add(item, 0);
+            }
+
+            for (int index = 0; index < 10000; index++)
+            {
+                var random = NumericUtilities.GetWeightedRandom(items, proportions);
+                countsByItem[random] += 1;
+            }
+
+            var xxx = 1000;
         }
 
         private void CreateHouseSalePredictData(string folder)
@@ -62,10 +81,15 @@ namespace CFAIProcessor.TestUI
             var testDataFile = Path.Combine(folder, "test-data-house-sales.txt");
             var testConfigFile = Path.Combine(folder, "test-data-house-sales.json");
 
+            var predictFile = Path.Combine(folder, "predict-output.txt");
+
             var prediction = new HousePricePrediction();
 
-            prediction.RunTrainModel(trainDataFile, trainConfigFile,
-                        testDataFile, testConfigFile);
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            prediction.RunTrainAndPredictModel(trainDataFile, trainConfigFile,
+                        testDataFile, testConfigFile,
+                        predictFile, cancellationTokenSource.Token);                        
 
             int xxx = 1000;
         }

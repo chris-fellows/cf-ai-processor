@@ -1,0 +1,376 @@
+﻿@using CFAIProcessor.Interfaces
+@using CFAIProcessor.Models
+
+@inject IChartDataService ChartDataService
+@inject IChartTypeService ChartTypeService
+@inject IDataSetInfoService DataSetInfoService
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+
+<script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
+<script>
+    var myChartObject;
+
+    async function create3DScatterChart(controlId, title, axisGroups)
+    {    
+    console.log(axisGroups);
+
+    // // https://plotly.com/javascript/3d-axes/#set-axes-title
+    //const ctx = document.getElementById(controlId);
+    //   x:unpack(rows, 'x1'), y: unpack(rows, 'y1'), z: unpack(rows, 'z1'),
+
+    let data = [];
+    for(var groupIndex = 0; groupIndex < axisGroups.length; groupIndex++) 
+    {            
+    var groupData = {
+    x: axisGroups[groupIndex].axes[0].values,
+    y: axisGroups[groupIndex].axes[1].values,
+    z: axisGroups[groupIndex].axes[2].values,
+    mode: 'markers',
+    marker: {
+    size: 12,
+    line: {
+    color: 'rgba(217, 217, 217, 0.14)',
+    width: 0.5},
+    opacity: 0.8},
+    type: 'scatter3d'
+    };
+
+    data.push(groupData);            
+    }
+
+    var layout = {
+    title: title,
+    margin: {
+    l: 0,
+    r: 0,
+    b: 0,
+    t: 0
+    },
+    scene:  {
+    xaxis: {
+    title: {
+    text: axisGroups[0].axes[0].name
+    }
+    },
+    yaxis: {
+    title: {
+    text: axisGroups[0].axes[1].name
+    }
+    },
+    zaxis: {
+    title: {
+    text: axisGroups[0].axes[2].name
+    }
+    }
+    }
+    };
+
+    //console.log("Layout=" + layout);
+
+    console.log("Calling Plotly");
+    Plotly.newPlot(controlId, data, layout);
+    console.log("Called Plotly");
+    
+    }
+
+    async function create2DScatterChart(controlId, title, axisGroups)
+    {  
+        // mode: markers/lines/lines+markers
+    let data = [];
+    for(var groupIndex = 0; groupIndex < axisGroups.length; groupIndex++)
+    {
+    var groupData = {
+    x: axisGroups[groupIndex].axes[0].values,
+    y: axisGroups[groupIndex].axes[1].values,          
+    mode: 'markers',
+    marker: {
+    size: 12,
+    line: {
+    color: 'rgba(217, 217, 217, 0.14)',
+    width: 0.5},
+    opacity: 0.8},
+    type: 'scatter2d'
+    };
+
+    data.push(groupData);
+    }
+
+    var layout = {
+    title: title,
+    margin: {
+    l: 0,
+    r: 0,
+    b: 0,
+    t: 0
+    },
+    scene:  {
+    xaxis: {
+    title: {
+    text: axisGroups[0].axes[0].name
+    }
+    },
+    yaxis: {
+    title: {
+    text: axisGroups[0].axes[1].name
+    }
+    }              
+    }
+    };
+
+    //console.log("Layout=" + layout);
+
+    console.log("Calling Plotly");
+    Plotly.newPlot(controlId, data, layout);
+    console.log("Called Plotly");    
+    }
+
+
+    async function createLineChart(controlId, title, axisGroups)
+    {    
+
+    console.log(axisGroups);
+
+    // // https://plotly.com/javascript/3d-axes/#set-axes-title
+    //const ctx = document.getElementById(controlId);
+    //   x:unpack(rows, 'x1'), y: unpack(rows, 'y1'), z: unpack(rows, 'z1'),
+
+    let data = [];
+    for(var groupIndex = 0; groupIndex < axisGroups.length; groupIndex++)
+    {
+    var groupData = {
+    x: axisGroups[groupIndex].axes[0].values,
+    y: axisGroups[groupIndex].axes[1].values,               
+    type: 'scatter'
+    };
+
+    data.push(groupData);
+    }
+
+    var layout = {
+    title: title,
+    margin: {
+    l: 0,
+    r: 0,
+    b: 0,
+    t: 0
+    },
+    scene:  {
+    xaxis: {
+    title: {
+    text: axisGroups[0].axes[0].name
+    }
+    },
+    yaxis: {
+    title: {
+    text: axisGroups[0].axes[1].name
+    }
+    }                
+    }
+    };
+
+    //console.log("Layout=" + layout);
+
+    console.log("Calling Plotly");
+    Plotly.newPlot(controlId, data, layout);
+    console.log("Called Plotly");    
+    }
+
+</script>
+
+<label for="chartType">X axis:</label>
+<InputSelect @bind-Value="@AxisColumnList[0].SelectedColumnInternalName">
+    @foreach (DataSetColumn column in AxisColumnList[0].Columns)
+    {
+        @if (column.InternalName == AxisColumnList[0].SelectedColumnInternalName)
+        {
+            <option selected value="@column.InternalName">@column.ExternalName</option>
+        }
+        else
+        {
+            <option value="@column.InternalName">@column.ExternalName</option>
+        }
+    }
+</InputSelect>
+
+<label for="chartType">Y axis:</label>
+<InputSelect @bind-Value="@AxisColumnList[1].SelectedColumnInternalName">
+    @foreach (DataSetColumn column in AxisColumnList[1].Columns)
+    {
+        @if (column.InternalName == AxisColumnList[1].SelectedColumnInternalName)
+        {
+            <option selected value="@column.InternalName">@column.ExternalName</option>
+        }
+        else
+        {
+            <option value="@column.InternalName">@column.ExternalName</option>
+        }
+    }
+</InputSelect>
+
+<label for="chartType">Z axis:</label>
+<InputSelect @bind-Value="@AxisColumnList[2].SelectedColumnInternalName">
+    @foreach (DataSetColumn column in AxisColumnList[2].Columns)
+    {
+        @if (column.InternalName == AxisColumnList[2].SelectedColumnInternalName)
+        {
+            <option selected value="@column.InternalName">@column.ExternalName</option>
+        }
+        else
+        {
+            <option value="@column.InternalName">@column.ExternalName</option>
+        }
+    }
+</InputSelect>
+
+<div id="myChart"></div>
+
+@code {
+    private string _chartTypeId = "1";  // Default
+    private string _dataSetInfoId = "";
+    private List<DataSetInfo> _dataSetInfos = new();
+
+    private class AxisColumns
+    {
+        public string Name { get; set; }
+
+        private string _selectedColumnInternalName = String.Empty;
+        public string SelectedColumnInternalName
+        {
+            get { return _selectedColumnInternalName; }
+            set
+            {
+                _selectedColumnInternalName = value;
+                if (SelectedAxisColumnChangedAction != null)
+                {
+                    SelectedAxisColumnChangedAction(this);
+                }
+            }
+        }
+
+        public List<DataSetColumn> Columns = new();
+
+        public Action<AxisColumns>? SelectedAxisColumnChangedAction;
+    }
+
+    private List<AxisColumns> AxisColumnList = new();
+
+    [Parameter]
+    public string ChartTypeId
+    {
+        get { return _chartTypeId; }
+        set
+        {
+            if (_chartTypeId != value)
+            {
+                _chartTypeId = value;
+
+                Task.Factory.StartNew(() => DisplayChartAsync(ChartTypeId, DataSetInfoId));                
+            }
+        }
+    }
+
+    [Parameter]
+    public string DataSetInfoId
+    {
+        get { return _dataSetInfoId; }
+        set
+        {
+            if (_dataSetInfoId != value)
+            {
+                _dataSetInfoId = value;
+
+                if (!_dataSetInfos.Any())
+                {
+                    _dataSetInfos = DataSetInfoService.GetAll();
+                }
+
+                // Set data set columns
+                var dataSetInfo = _dataSetInfos.First(ds => ds.Id == _dataSetInfoId);
+                foreach (var axisColumns in AxisColumnList)
+                {                    
+                    axisColumns.Columns.Clear();
+                    axisColumns.Columns.AddRange(dataSetInfo.Columns);
+                    axisColumns.SelectedColumnInternalName = axisColumns.Columns[0].InternalName;
+                }
+
+                Task.Factory.StartNew(() => DisplayChartAsync(ChartTypeId, DataSetInfoId));
+            }
+        }
+    }
+
+    private void SelectedAxisColumnChange(AxisColumns axisColumns)
+    {
+        Task.Factory.StartNew(() => DisplayChartAsync(ChartTypeId, DataSetInfoId));
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // <canvas id="myChart"></canvas>        
+        _dataSetInfos = DataSetInfoService.GetAll();
+
+        AxisColumnList = new List<AxisColumns>()
+        {
+            new AxisColumns() { Columns = new(), SelectedAxisColumnChangedAction = SelectedAxisColumnChange },      // X
+            new AxisColumns() { Columns = new(), SelectedAxisColumnChangedAction = SelectedAxisColumnChange },      // Y
+            new AxisColumns() { Columns = new(), SelectedAxisColumnChangedAction = SelectedAxisColumnChange },      // Y
+        };       
+    } 
+
+    /// <summary>
+    /// Displays chart
+    /// </summary>
+    /// <param name="metricsTypeId">Metrics type</param>
+    /// <param name="fromDateTime">From date time for data</param>
+    /// <param name="chartTypeId">Chart type</param>
+    /// <returns></returns>
+    private async Task DisplayChartAsync(string chartTypeId, string dataSetInfoId)
+    {        
+        // Set chart config to create        
+        var chartConfig = new ChartConfig()
+        {
+            DataSetInfo = _dataSetInfos.First(ds => ds.Id == dataSetInfoId),
+            AxisColumns = new List<string>()
+            {
+               AxisColumnList[0].SelectedColumnInternalName,
+               AxisColumnList[1].SelectedColumnInternalName,
+               AxisColumnList[2].SelectedColumnInternalName,
+            }
+        };
+        chartConfig.AxisColumns.RemoveAll(c => String.IsNullOrEmpty(c));    // Remove where axis not selected (E.g. No Z axis)        
+
+        // Get chart data
+        var chartData = ChartDataService.GetChartData(ChartTypeId, chartConfig);
+
+        // Display chart        
+        await JS.InvokeVoidAsync("create3DScatterChart",
+                      "myChart",
+                      chartData.Title,
+                      chartData.AxisGroups.Select(ag =>
+                      new
+                      {
+                          name = ag.Name,
+                          axes = ag.AxisList.Select(axis =>
+                          new
+                          {
+                              name = axis.Name,
+                              values = axis.Values
+                          })
+                      }));
+
+        /*
+        await JS.InvokeVoidAsync("create3DScatterChart",
+                      "myChart",
+                      chartData.Title,
+                      chartData.AxisGroups.Select(ag =>
+                      new {
+                          name = ag.Name,
+                          axes = ag.AxisList.Select(axis =>
+                          new {
+                              name = axis.Name,
+                              values = axis.Values
+                          })
+                      }));    
+        */
+    }
+}

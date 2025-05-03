@@ -1,6 +1,7 @@
 ﻿using CFAIProcessor.Interfaces;
 using CFAIProcessor.Models;
 using CFAIProcessor.Utilities;
+using CFCSV.Reader;
 using System.Data;
 using Tensorflow.NumPy;
 
@@ -26,8 +27,8 @@ namespace CFAIProcessor.CSV
         }
 
         public NDArray GetFeatureValues(bool normalise, int? maxRows)
-        {
-            var dataTable = GetDataAsDataTable(_dataFile);
+        {            
+            var dataTable = new CSVDataTableReader().Read(_dataFile);
             
             var featureColumns = _csvConfig.Columns.Where(c => c.IsFeature).ToList();
 
@@ -66,8 +67,8 @@ namespace CFAIProcessor.CSV
 
         public NDArray GetLabelValues(bool normalise, int? maxRows)
         {
-            var dataTable = GetDataAsDataTable(_dataFile);
-            
+            var dataTable = new CSVDataTableReader().Read(_dataFile);
+
             var labelColumns = _csvConfig.Columns.Where(c => c.IsLabel).ToList();
 
             var labels = np.zeros((dataTable.Rows.Count, labelColumns.Count), Tensorflow.TF_DataType.TF_FLOAT);          
@@ -112,63 +113,63 @@ namespace CFAIProcessor.CSV
 
         public string[] LabelNames => _csvConfig.Columns.Where(c => c.IsLabel).Select(c => c.InternalName).ToArray();    
 
-        private DataTable GetDataAsDataTable(string dataFile)
-        {
-            if (!File.Exists(dataFile))
-            {
-                throw new FileNotFoundException("Data file does not exist", dataFile);
-            }
+        //private DataTable GetDataAsDataTable(string dataFile)
+        //{
+        //    if (!File.Exists(dataFile))
+        //    {
+        //        throw new FileNotFoundException("Data file does not exist", dataFile);
+        //    }
             
-            var dataTable = new DataTable();            
-            foreach(var column in _csvConfig.Columns)
-            {
-                dataTable.Columns.Add(column.InternalName, typeof(string));
-            }
+        //    var dataTable = new DataTable();            
+        //    foreach(var column in _csvConfig.Columns)
+        //    {
+        //        dataTable.Columns.Add(column.InternalName, typeof(string));
+        //    }
       
-            using (var reader = new StreamReader(dataFile))
-            {
-                int lineCount = 0;
-                var headers = new List<string>();
-                while (!reader.EndOfStream)
-                {
-                    lineCount++;
-                    var line = reader.ReadLine();
-                    var elements = line.Split('\t');
-                    if (lineCount == 1)
-                    {
-                        headers = elements.ToList();
-                    }
-                    else
-                    {
-                        var row = dataTable.NewRow();
+        //    using (var reader = new StreamReader(dataFile))
+        //    {
+        //        int lineCount = 0;
+        //        var headers = new List<string>();
+        //        while (!reader.EndOfStream)
+        //        {
+        //            lineCount++;
+        //            var line = reader.ReadLine();
+        //            var elements = line.Split('\t');
+        //            if (lineCount == 1)
+        //            {
+        //                headers = elements.ToList();
+        //            }
+        //            else
+        //            {
+        //                var row = dataTable.NewRow();
 
-                        for(int index = 0; index < elements.Length; index++)
-                        {
-                            var columnName = headers[index];
-                            var columnValue = elements[index];
+        //                for(int index = 0; index < elements.Length; index++)
+        //                {
+        //                    var columnName = headers[index];
+        //                    var columnValue = elements[index];
 
-                            var columnConfig = _csvConfig.Columns.FirstOrDefault(c=> c.InternalName.Equals(columnName, StringComparison.OrdinalIgnoreCase));
-                            if (columnConfig != null)
-                            {
-                                row[columnName] = columnValue;
-                            }                            
-                        }
+        //                    var columnConfig = _csvConfig.Columns.FirstOrDefault(c=> c.InternalName.Equals(columnName, StringComparison.OrdinalIgnoreCase));
+        //                    if (columnConfig != null)
+        //                    {
+        //                        row[columnName] = columnValue;
+        //                    }                            
+        //                }
 
-                        dataTable.Rows.Add(row);
+        //                dataTable.Rows.Add(row);
 
-                        //var item = new HouseSaleData()
-                        //{
-                        //    NumberOfBeds = Convert.ToSingle(elements[headers.IndexOf(CSVHouseSaleDataColumnNames.NumberOfBeds)]),
-                        //    SizeInSquareFeet = Convert.ToSingle(elements[headers.IndexOf(CSVHouseSaleDataColumnNames.SizeInSquareFeet)]),
-                        //    SalePrice = Convert.ToSingle(elements[headers.IndexOf(CSVHouseSaleDataColumnNames.SalePrice)]),
-                        //};
-                        //items.Add(item);
-                    }
-                }
-            }
+        //                //var item = new HouseSaleData()
+        //                //{
+        //                //    NumberOfBeds = Convert.ToSingle(elements[headers.IndexOf(CSVHouseSaleDataColumnNames.NumberOfBeds)]),
+        //                //    SizeInSquareFeet = Convert.ToSingle(elements[headers.IndexOf(CSVHouseSaleDataColumnNames.SizeInSquareFeet)]),
+        //                //    SalePrice = Convert.ToSingle(elements[headers.IndexOf(CSVHouseSaleDataColumnNames.SalePrice)]),
+        //                //};
+        //                //items.Add(item);
+        //            }
+        //        }
+        //    }
             
-            return dataTable;
-        }
+        //    return dataTable;
+        //}
 
         //private List<HouseSaleData> GetData(string dataFile)
         //{

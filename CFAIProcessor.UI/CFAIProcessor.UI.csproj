@@ -8,9 +8,11 @@
 
   <ItemGroup>
     <Folder Include="Models\" />
+    <Folder Include="Utilities\" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\cf-utilities-core\CFUtilities\CFUtilities.csproj" />
     <ProjectReference Include="..\CFAIProcessor.Common\CFAIProcessor.Common.csproj" />
   </ItemGroup>
 

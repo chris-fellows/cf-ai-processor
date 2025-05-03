@@ -16,11 +16,11 @@ namespace CFAIProcessor.SystemTask
 
         public async Task ExecuteAsync(Dictionary<string, object> parameters, IServiceProvider serviceProvider, CancellationToken cancellationToken)
         {            
-            var predictionRequest = (PredictionRequest)parameters["PredictionRequest"];
+            //var predictionRequest = (PredictionRequest)parameters["PredictionRequest"];
 
-            var predictionRequestProcessor = serviceProvider.GetService<IPredictionRequestProcessor>();
+            //var predictionRequestProcessor = serviceProvider.GetService<IPredictionRequestProcessor>();
 
-            predictionRequestProcessor.Run(predictionRequestProcessor, cancellationToken);
+            //predictionRequestProcessor.Run(predictionRequestProcessor, cancellationToken);
         }
     }
 }

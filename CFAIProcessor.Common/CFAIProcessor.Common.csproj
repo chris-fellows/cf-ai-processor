@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Services\" />
+    <ProjectReference Include="..\..\cf-csv\CFCSV\CFCSV.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,90 @@
+﻿@page "/charts"
+@using CFAIProcessor.Interfaces
+@using CFAIProcessor.Models
+@inject IChartTypeService ChartTypeService
+@inject IDataSetInfoService DataSetInfoService
+
+@inject IJSRuntime JS
+
+@rendermode InteractiveServer
+
+<style>
+    .chartobjectcontainer {
+    width: 100%;
+    }
+</style>
+
+<label for="dataSet">Data set:</label>
+<InputSelect @bind-Value="@DataSetInfoId">
+    @foreach (DataSetInfo dataSetInfo in DataSetInfos)
+    {
+        @if (dataSetInfo.Id == DataSetInfoId)
+        {
+            <option selected value="@dataSetInfo.Id">@dataSetInfo.Name</option>
+        }
+        else
+        {
+            <option value="@dataSetInfo.Id">@dataSetInfo.Name</option>
+        }
+    }
+</InputSelect>
+
+<label for="chartType">Chart:</label>
+<InputSelect @bind-Value="@ChartTypeId">
+    @foreach (ChartType chartType in ChartTypes)
+    {
+        @if (chartType.Id == ChartTypeId)
+        {
+            <option selected value="@chartType.Id">@chartType.Name</option>
+        }
+        else
+        {
+            <option value="@chartType.Id">@chartType.Name</option>
+        }
+    }
+</InputSelect>
+
+<div class="chartobjectcontainer">
+    <ChartObject DataSetInfoId="@DataSetInfoId" ChartTypeId="@ChartTypeId"></ChartObject>
+</div>
+
+@code {
+    private List<ChartType> ChartTypes = new();
+    private List<DataSetInfo> DataSetInfos = new();
+
+    private string _chartTypeId = String.Empty;
+    public string ChartTypeId
+    {
+        get { return _chartTypeId; }
+        set
+        {
+            if (_chartTypeId != value)
+            {
+                _chartTypeId = value;
+            }
+        }
+    }
+
+    private string _dataSetInfoId = String.Empty;
+    public string DataSetInfoId
+    {
+        get { return _dataSetInfoId; }
+        set
+        {
+            if (_dataSetInfoId != value)
+            {
+                _dataSetInfoId = value;
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {        
+        ChartTypes = await ChartTypeService.GetAllAsync();
+
+        DataSetInfos = DataSetInfoService.GetAll();
+
+        ChartTypeId = ChartTypes.First().Id;
+        DataSetInfoId = DataSetInfos.First().Id;
+    }
+}

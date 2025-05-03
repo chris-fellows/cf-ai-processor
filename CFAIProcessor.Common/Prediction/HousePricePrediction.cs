@@ -18,9 +18,13 @@ namespace CFAIProcessor.Prediction
     /// </summary>
     public class HousePricePrediction
     {
-        public void RunTrainModel(string trainDataFile, string trainConfigFile,
-                        string testDataFile, string testConfigFile)
+        public void RunTrainAndPredictModel(string trainDataFile, string trainConfigFile,
+                        string testDataFile, string testConfigFile,
+                        string predictFile,
+                        CancellationToken cancellationToken)
         {
+            
+
             var logFile = "D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\Log\\Log.txt";
             Directory.CreateDirectory(Path.GetDirectoryName(logFile));
             var log = new SimpleLogCSV(logFile);
@@ -32,23 +36,30 @@ namespace CFAIProcessor.Prediction
                 LearningRate = 0.01f,
                 IsImportingGraph = false,
                 NormaliseValues = true,
-                TrainDataFile = trainDataFile,
+                //TrainDataFile = trainDataFile,
                 MaxTrainRows = null,        // All training rows
-                TestDataFile = testDataFile,
+                //TestDataFile = testDataFile,
                 MaxTestRows = null,         // All test rows
-                ModelFolder = $"D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\PredictionModel"
+                ModelFolder = ""    //$"D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\PredictionModel"
             };
 
-            //var savePath = $"D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\PredictionModel\\MyModel";
+            //var savePath = $"D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\PredictionModel\\MyModel";            
 
             // Set training data source
-            var trainDataSource = new CSVPredictionDataSource(trainDataFile, trainConfigFile);
+            var trainConfig = JsonUtilities.DeserializeFromString<CSVConfig>(File.ReadAllText(trainConfigFile), JsonUtilities.DefaultJsonSerializerOptions);
+            var trainDataSource = new CSVPredictionDataSource(trainDataFile, trainConfig);
 
-            // Set ttest data source
-            var testDataSource = new CSVPredictionDataSource(testDataFile, testConfigFile);
+            // Set test data source
+            var testConfig = JsonUtilities.DeserializeFromString<CSVConfig>(File.ReadAllText(testConfigFile), JsonUtilities.DefaultJsonSerializerOptions);
+            var testDataSource = new CSVPredictionDataSource(testDataFile, testConfig);
+
+            // Prediction output file for test data
+            var predictionOutputFile = new CSVPredictionOutputFile(predictFile, testConfig);
 
             var predictionV3 = new PredictionProcessorV3();
-            predictionV3.Run(config, trainDataSource, testDataSource);
+            predictionV3.Run(config, trainDataSource, testDataSource, predictionOutputFile, cancellationToken);
+
+            predictionOutputFile.Dispose();
 
             // Run model create
             var predictionNew = new PredictionProcessorV2();
@@ -77,8 +88,8 @@ namespace CFAIProcessor.Prediction
                 LearningRate = 0.01f,
                 IsImportingGraph = false,
                 NormaliseValues = true,
-                TrainDataFile = trainDataFile,
-                TestDataFile = testDataFile,
+                //TrainDataFile = trainDataFile,
+                //TestDataFile = testDataFile,
                 ModelFolder = $"D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\PredictionModel"
             };
             

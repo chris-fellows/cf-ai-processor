@@ -23,6 +23,8 @@ namespace CFAIProcessor.Prediction
             public CSVConfig TestConfig { get; set; } = new();
 
             public PredictionConfig PredictionConfig { get; set; } = new();
+
+            public string PredictionOutputDataFile { get; set; } = String.Empty;
         }
 
         public PredictionResponse Run(PredictionRequest predictionRequest, CancellationToken cancellationToken)
@@ -66,14 +68,17 @@ namespace CFAIProcessor.Prediction
 
             //var savePath = $"D:\\Data\\Dev\\C#\\cf-ai-processor\\CFAIProcessor.UI\\bin\\Debug\\net8.0-windows\\PredictionModel\\MyModel";
 
-            // Create data source for test data            
+            // Create data source for reading training data
             var trainDataSource = new CSVPredictionDataSource(configParams.TrainDataFile, configParams.TrainConfig);
 
-            // Create data source for             
+            // Create data source for reading training data
             var testDataSource = new CSVPredictionDataSource(configParams.TestDataFile, configParams.TestConfig);
 
+            // Create prediction output           
+            var predictionOutputFile = new CSVPredictionOutputFile(configParams.PredictionOutputDataFile, configParams.TrainConfig);
+
             var predictionV3 = new PredictionProcessorV3();
-            predictionV3.Run(configParams.PredictionConfig, trainDataSource, testDataSource, cancellationToken);
+            predictionV3.Run(configParams.PredictionConfig, trainDataSource, testDataSource, predictionOutputFile, cancellationToken);
         }
 
         /// <summary>
@@ -88,7 +93,10 @@ namespace CFAIProcessor.Prediction
         private (ConfigParams configParamsOutput,
                 string errorMessageOutput) PrepareInputFiles(string inputFile)
         {
-            var configParams = new ConfigParams();                        
+            var configParams = new ConfigParams()
+            {
+                PredictionOutputDataFile = Path.Combine(Path.GetTempPath(), "prediction.txt")
+            };
             var errorMessage = "";
 
             if (inputFile.EndsWith(".zip", StringComparison.InvariantCultureIgnoreCase))    // .zip file, extract files
