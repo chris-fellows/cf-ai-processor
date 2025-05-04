@@ -1,5 +1,4 @@
-﻿using CFAIProcessor.Common.Models;
-using CFAIProcessor.Models;
+﻿using CFAIProcessor.Models;
 
 namespace CFAIProcessor.Interfaces
 {

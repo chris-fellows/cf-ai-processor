@@ -1,8 +1,10 @@
 using CFAIProcessor.CSV;
-using CFAIProcessor.ImageChecker;
+using CFAIProcessor.Enums;
 using CFAIProcessor.Models;
 using CFAIProcessor.Prediction;
+using CFAIProcessor.Services;
 using CFAIProcessor.Utilities;
+using CFCSV.Reader;
 using Tensorflow;
 
 namespace CFAIProcessor.TestUI
@@ -13,10 +15,103 @@ namespace CFAIProcessor.TestUI
         {
             InitializeComponent();
 
-            TestWeightedRandom();
+            TestAggregateCSV();
+
+            //TestWeightedRandom();
 
             //string folder = "D:\\Data\\Dev\\C#\\cf-ai-processor-local";
             //CreateHouseSalePredictData(folder);       
+        }
+
+        private void TestAggregateCSV()
+        {
+            // Note that GroupByColumnInternalNames isn't currently used because we group by columns with
+            // AggregateColumn.AggregateAction = None.
+            var aggregateConfig = new AggregateConfig()
+            {
+                Columns = new List<AggregateColumn>()
+                {
+                   new AggregateColumn()
+                   {
+                       InputName = "number_of_beds",
+                       OutputName = "number_of_beds",
+                       AggregateAction = AggregateActions.None
+                   },
+                   new AggregateColumn()
+                   {
+                       InputName = "size_in_square_feet",
+                       OutputName = "size_in_square_feet_rounded",
+                       AggregateAction = AggregateActions.None,
+                       NumberConvertAction = NumberConvertActions.ModuloRoundDown,
+                       NumberConvertModuloValue = 1000     // Round to multiples of
+                   },
+                    new AggregateColumn()
+                   {
+                       InputName = "size_in_square_feet",
+                       OutputName = "size_in_square_feet_avg",
+                       AggregateAction = AggregateActions.Avg,
+                       DecimalPlaces = 0,
+                       GroupByColumnInternalNames = new()
+                       {
+                           "number_of_beds"
+                       }
+                   },
+                   new AggregateColumn()
+                   {
+                       InputName = "size_in_square_feet",
+                       OutputName = "size_in_square_feet_min",
+                       AggregateAction = AggregateActions.Min,
+                       DecimalPlaces = 0,
+                       GroupByColumnInternalNames = new()
+                       {
+                           "number_of_beds"
+                       }
+                   },
+                   new AggregateColumn()
+                   {
+                       InputName = "size_in_square_feet",
+                       OutputName = "size_in_square_feet_max",
+                       AggregateAction = AggregateActions.Max,
+                       DecimalPlaces = 0,
+                       GroupByColumnInternalNames = new()
+                       {
+                           "number_of_beds"
+                       }
+                   },
+                   new AggregateColumn()
+                   {
+                       InputName = "sale_price",
+                       OutputName = "sale_price_actual_avg",
+                       AggregateAction = AggregateActions.Avg,
+                       DecimalPlaces = 0,
+                       GroupByColumnInternalNames = new()
+                       {
+                           "number_of_beds"
+                       }
+                   },
+                   new AggregateColumn()
+                   {
+                       InputName = "prediction_0",
+                       OutputName = "sale_price_predicted_avg",
+                       AggregateAction = AggregateActions.Avg,
+                       DecimalPlaces = 0,
+                       GroupByColumnInternalNames = new()
+                       {
+                           "number_of_beds"
+                       }
+                   },
+                }
+            };
+
+            var file = "D:\\Data\\Dev\\C#\\cf-ai-processor-local\\predict-output.txt";
+
+            var aggregateService = new AggregateService();
+
+            var dataTable = new CSVDataTableReader().Read(file);
+
+            var dataTableNew = aggregateService.Aggregate(dataTable, aggregateConfig);
+
+            int xxx = 100;
         }
 
         private void TestWeightedRandom()

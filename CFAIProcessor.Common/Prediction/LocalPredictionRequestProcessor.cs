@@ -75,10 +75,11 @@ namespace CFAIProcessor.Prediction
             var testDataSource = new CSVPredictionDataSource(configParams.TestDataFile, configParams.TestConfig);
 
             // Create prediction output           
-            var predictionOutputFile = new CSVPredictionOutputFile(configParams.PredictionOutputDataFile, configParams.TrainConfig);
+            //var predictionOutputFile = new CSVPredictionOutputFile(configParams.PredictionOutputDataFile, configParams.TrainConfig);
+            var predictionOutputFile = new CSVDataSetWriter(configParams.PredictionOutputDataFile, (Char)9);
 
             var predictionV3 = new PredictionProcessorV3();
-            predictionV3.Run(configParams.PredictionConfig, trainDataSource, testDataSource, predictionOutputFile, cancellationToken);
+            predictionV3.TrainAndPredict(configParams.PredictionConfig, trainDataSource, testDataSource, predictionOutputFile, cancellationToken);
         }
 
         /// <summary>

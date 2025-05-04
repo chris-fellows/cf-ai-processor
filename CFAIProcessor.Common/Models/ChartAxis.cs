@@ -10,6 +10,6 @@ namespace CFAIProcessor.Models
     {
         public string Name { get; set; } = String.Empty;
 
-        public float[] Values { get; set; } = new float[0];
+        public object[] Values { get; set; } = new object[0];
     }
 }

@@ -54,12 +54,13 @@ namespace CFAIProcessor.Prediction
             var testDataSource = new CSVPredictionDataSource(testDataFile, testConfig);
 
             // Prediction output file for test data
-            var predictionOutputFile = new CSVPredictionOutputFile(predictFile, testConfig);
+            //var predictionOutputFile = new CSVPredictionOutputFile(predictFile, testConfig);
+            var predictionDataSetWriter = new CSVDataSetWriter(predictFile, (Char)9);
 
             var predictionV3 = new PredictionProcessorV3();
-            predictionV3.Run(config, trainDataSource, testDataSource, predictionOutputFile, cancellationToken);
+            predictionV3.TrainAndPredict(config, trainDataSource, testDataSource, predictionDataSetWriter, cancellationToken);
 
-            predictionOutputFile.Dispose();
+            //predictionOutputFile.Dispose();
 
             // Run model create
             var predictionNew = new PredictionProcessorV2();

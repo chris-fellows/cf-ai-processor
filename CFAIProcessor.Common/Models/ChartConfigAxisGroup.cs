@@ -7,14 +7,12 @@ using System.Threading.Tasks;
 
 namespace CFAIProcessor.Models
 {
-    public class ChartAxisGroup
+    public class ChartConfigAxisGroup
     {
-        public string Name { get; set; } = String.Empty;
-
         public AxisGroupModes Mode { get; set; } = AxisGroupModes.Markers;
 
         public string Color { get; set; } = String.Empty;
 
-        public List<ChartAxis> AxisList { get; set; } = new List<ChartAxis>();
+        public List<string> AxisColumns { get; set; } = new();
     }
 }

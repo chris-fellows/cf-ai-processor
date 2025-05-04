@@ -1,4 +1,4 @@
-﻿using CFAIProcessor.Common.Models;
+﻿using CFAIProcessor.Enums;
 using CFAIProcessor.Interfaces;
 using CFAIProcessor.Models;
 using CFCSV.Reader;
@@ -13,38 +13,39 @@ namespace CFAIProcessor.Services
     public class CSVChartDataService : IChartDataService
     {
         public ChartData GetChartData(string chartTypeId, ChartConfig chartConfig)
-        {
-            var cp = "CP100";
+        {            
             try
             {
-                // Load data
-                cp = "CP200";
-                var dataTable = new CSVDataTableReader().Read(chartConfig.DataSetInfo.DataSource);
-                cp = "CP200";
+                // Load data             
+                var dataTable = new CSVDataTableReader().Read(chartConfig.DataSetInfo.DataSource);                
 
                 var chartData = new ChartData();
 
-                // Add single axis group
-                var chartAxisGroup = new ChartAxisGroup();
-                foreach (var column in chartConfig.AxisColumns)
+                foreach (var chartConfigAxisGroup in chartConfig.AxisGroups)
                 {
-                    cp = "CP300";
-                    var chartAxis = new ChartAxis() { Name = column, Values = new float[dataTable.Rows.Count] };
-                    cp = "CP400";
-                    chartAxisGroup.AxisList.Add(chartAxis);
-                    for (int rowIndex = 0; rowIndex < dataTable.Rows.Count; rowIndex++)
+                    // Create axis group
+                    var chartAxisGroup = new ChartAxisGroup()
                     {
-                        chartAxis.Values[rowIndex] = Convert.ToSingle(dataTable.Rows[rowIndex][column]);
+                        Name = $"Group {chartConfig.AxisGroups.IndexOf(chartConfigAxisGroup) + 1}",
+                        Mode = chartConfigAxisGroup.Mode,
+                        Color = chartConfigAxisGroup.Color,
+                    };
+                    foreach (var axisColumn in chartConfigAxisGroup.AxisColumns)
+                    {                        
+                        var chartAxis = new ChartAxis() { Name = axisColumn, Values = new object[dataTable.Rows.Count] };                        
+                        chartAxisGroup.AxisList.Add(chartAxis);
+                        for (int rowIndex = 0; rowIndex < dataTable.Rows.Count; rowIndex++)
+                        {
+                            chartAxis.Values[rowIndex] = Convert.ToSingle(dataTable.Rows[rowIndex][axisColumn]);
+                        }                        
                     }
-                    cp = "CP500";
+                    chartData.AxisGroups.Add(chartAxisGroup);
                 }
-                chartData.AxisGroups.Add(chartAxisGroup);
 
                 return chartData;
             }
             catch(Exception exception)
-            {
-                var newCP = cp;
+            {                
                 throw;
             }
         }

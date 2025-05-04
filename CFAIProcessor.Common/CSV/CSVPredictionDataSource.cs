@@ -23,7 +23,7 @@ namespace CFAIProcessor.CSV
             if (!File.Exists(_dataFile))
             {
                 throw new FileNotFoundException("Data file does not exist", _dataFile);
-            }                        
+            }                                    
         }
 
         public NDArray GetFeatureValues(bool normalise, int? maxRows)

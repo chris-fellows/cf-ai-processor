@@ -12,6 +12,6 @@ namespace CFAIProcessor.Models
 
         public DataSetInfo DataSetInfo { get; set; }
 
-        public List<string> AxisColumns { get; set; } = new();
+        public List<ChartConfigAxisGroup> AxisGroups { get; set; } = new();
     }
 }

@@ -1,4 +1,5 @@
-﻿@using CFAIProcessor.Interfaces
+﻿@using CFAIProcessor.Enums
+@using CFAIProcessor.Interfaces
 @using CFAIProcessor.Models
 
 @inject IChartDataService ChartDataService
@@ -9,7 +10,19 @@
 
 <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
 <script>
-    var myChartObject;
+    var myChartObject;        
+
+    // Get Plotly chart group mode from internal mode
+    function getChartGroupMode(mode)
+    {
+    switch(mode)
+    {
+    case "Lines": return "lines";
+    case "Markers": return "markers";
+    case "LinesAndMarks": return "lines+markers";
+    }
+    return "";
+    }
 
     async function create3DScatterChart(controlId, title, axisGroups)
     {    
@@ -71,26 +84,28 @@
     console.log("Calling Plotly");
     Plotly.newPlot(controlId, data, layout);
     console.log("Called Plotly");
-    
+
     }
 
     async function create2DScatterChart(controlId, title, axisGroups)
     {  
-        // mode: markers/lines/lines+markers
+    console.log(axisGroups);
+
+    // mode: markers/lines/lines+markers
     let data = [];
     for(var groupIndex = 0; groupIndex < axisGroups.length; groupIndex++)
-    {
+    {  
     var groupData = {
     x: axisGroups[groupIndex].axes[0].values,
     y: axisGroups[groupIndex].axes[1].values,          
-    mode: 'markers',
+    mode: getChartGroupMode(axisGroups[groupIndex].mode),
     marker: {
     size: 12,
     line: {
-    color: 'rgba(217, 217, 217, 0.14)',
+    color: axisGroups[groupIndex].color,
     width: 0.5},
     opacity: 0.8},
-    type: 'scatter2d'
+    type: 'scatter'
     };
 
     data.push(groupData);
@@ -208,6 +223,21 @@
     }
 </InputSelect>
 
+<label for="chartType">Y2 axis:</label>
+<InputSelect @bind-Value="@Y2AxisColumns.SelectedColumnInternalName">
+    @foreach (DataSetColumn column in Y2AxisColumns.Columns)
+    {
+        @if (column.InternalName == Y2AxisColumns.SelectedColumnInternalName)
+        {
+            <option selected value="@column.InternalName">@column.ExternalName</option>
+        }
+        else
+        {
+            <option value="@column.InternalName">@column.ExternalName</option>
+        }
+    }
+</InputSelect>
+
 <label for="chartType">Z axis:</label>
 <InputSelect @bind-Value="@AxisColumnList[2].SelectedColumnInternalName">
     @foreach (DataSetColumn column in AxisColumnList[2].Columns)
@@ -229,6 +259,8 @@
     private string _chartTypeId = "1";  // Default
     private string _dataSetInfoId = "";
     private List<DataSetInfo> _dataSetInfos = new();
+
+    private AxisColumns Y2AxisColumns = new AxisColumns();
 
     private class AxisColumns
     {
@@ -294,6 +326,10 @@
                     axisColumns.SelectedColumnInternalName = axisColumns.Columns[0].InternalName;
                 }
 
+                Y2AxisColumns.Columns.Clear();
+                Y2AxisColumns.Columns.AddRange(dataSetInfo.Columns);
+                Y2AxisColumns.SelectedColumnInternalName = Y2AxisColumns.Columns[0].InternalName;
+
                 Task.Factory.StartNew(() => DisplayChartAsync(ChartTypeId, DataSetInfoId));
             }
         }
@@ -314,7 +350,10 @@
             new AxisColumns() { Columns = new(), SelectedAxisColumnChangedAction = SelectedAxisColumnChange },      // X
             new AxisColumns() { Columns = new(), SelectedAxisColumnChangedAction = SelectedAxisColumnChange },      // Y
             new AxisColumns() { Columns = new(), SelectedAxisColumnChangedAction = SelectedAxisColumnChange },      // Y
-        };       
+        };
+
+        Y2AxisColumns.Columns = new List<DataSetColumn>();
+        Y2AxisColumns.SelectedAxisColumnChangedAction = SelectedAxisColumnChange;
     } 
 
     /// <summary>
@@ -330,26 +369,49 @@
         var chartConfig = new ChartConfig()
         {
             DataSetInfo = _dataSetInfos.First(ds => ds.Id == dataSetInfoId),
-            AxisColumns = new List<string>()
+            AxisGroups = new List<ChartConfigAxisGroup>()
             {
-               AxisColumnList[0].SelectedColumnInternalName,
-               AxisColumnList[1].SelectedColumnInternalName,
-               AxisColumnList[2].SelectedColumnInternalName,
+                new ChartConfigAxisGroup()
+                {
+                    Mode = AxisGroupModes.Markers,
+                    Color = "rgba(217, 217, 217, 0.14)",
+                    AxisColumns = new List<string>()
+                    {
+                       AxisColumnList[0].SelectedColumnInternalName,
+                       AxisColumnList[1].SelectedColumnInternalName,
+                       //AxisColumnList[2].SelectedColumnInternalName,
+                    }
+                },
+                new ChartConfigAxisGroup()
+                {
+                    Mode = AxisGroupModes.Lines,
+                    Color = "rgba(204, 100, 128, 0.14)",
+                    AxisColumns = new List<string>()
+                    {
+                        AxisColumnList[0].SelectedColumnInternalName,
+                        Y2AxisColumns.SelectedColumnInternalName
+                    }
+                }
             }
         };
-        chartConfig.AxisColumns.RemoveAll(c => String.IsNullOrEmpty(c));    // Remove where axis not selected (E.g. No Z axis)        
+
+        chartConfig.AxisGroups.ForEach(group => group.AxisColumns.RemoveAll(c => String.IsNullOrEmpty(c)));    // Remove where axis not selected (E.g. No Z axis)        
+
+        
 
         // Get chart data
         var chartData = ChartDataService.GetChartData(ChartTypeId, chartConfig);
 
         // Display chart        
-        await JS.InvokeVoidAsync("create3DScatterChart",
+        await JS.InvokeVoidAsync("create2DScatterChart",
                       "myChart",
                       chartData.Title,
                       chartData.AxisGroups.Select(ag =>
                       new
                       {
                           name = ag.Name,
+                          mode = ag.Mode.ToString(),
+                          color = ag.Color,
                           axes = ag.AxisList.Select(axis =>
                           new
                           {

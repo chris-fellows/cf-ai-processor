@@ -28,6 +28,11 @@ namespace CFAIProcessor.Seed
                 new ChartType()
                 {
                     Id = Guid.NewGuid().ToString(),
+                    Name = "Bar chart"
+                },
+                new ChartType()
+                {
+                    Id = Guid.NewGuid().ToString(),
                     Name = "Line chart"
                 }
             };
