@@ -94,7 +94,7 @@ app.MapRazorComponents<App>()
 
 //// Load data
 //using (var scope = app.Services.CreateScope())
-//{   
+//{
 //    // Enable this to load seed data    
 //    new SeedLoader().LoadAsync(scope).Wait();
 

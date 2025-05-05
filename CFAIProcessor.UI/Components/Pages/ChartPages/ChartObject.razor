@@ -19,7 +19,7 @@
     {
     case "Lines": return "lines";
     case "Markers": return "markers";
-    case "LinesAndMarks": return "lines+markers";
+    case "LinesAndMarkers": return "lines+markers";
     }
     return "";
     }
@@ -191,6 +191,56 @@
     console.log("Called Plotly");    
     }
 
+    async function createBarChart(controlId, title, axisGroups)
+    {
+
+    console.log(axisGroups);
+
+    // // https://plotly.com/javascript/3d-axes/#set-axes-title
+    //const ctx = document.getElementById(controlId);
+    //   x:unpack(rows, 'x1'), y: unpack(rows, 'y1'), z: unpack(rows, 'z1'),
+
+    let data = [];
+    for(var groupIndex = 0; groupIndex < axisGroups.length; groupIndex++)
+    {
+        var groupData = {
+        x: axisGroups[groupIndex].axes[0].values,
+        y: axisGroups[groupIndex].axes[1].values,
+        type: 'bar'
+    };
+
+    data.push(groupData);
+    }
+
+    var layout = {
+    title: title,
+    margin: {
+    l: 0,
+    r: 0,
+    b: 0,
+    t: 0
+    },
+    scene:  {
+    xaxis: {
+    title: {
+    text: axisGroups[0].axes[0].name
+    }
+    },
+    yaxis: {
+    title: {
+    text: axisGroups[0].axes[1].name
+    }
+    }
+    }
+    };
+
+    //console.log("Layout=" + layout);
+
+    console.log("Calling Plotly");
+    Plotly.newPlot(controlId, data, layout);
+    console.log("Called Plotly");
+    }
+
 </script>
 
 <label for="chartType">X axis:</label>
@@ -260,6 +310,8 @@
     private string _dataSetInfoId = "";
     private List<DataSetInfo> _dataSetInfos = new();
 
+    private ChartType? _chartType;
+
     private AxisColumns Y2AxisColumns = new AxisColumns();
 
     private class AxisColumns
@@ -296,6 +348,8 @@
             if (_chartTypeId != value)
             {
                 _chartTypeId = value;
+
+                _chartType = ChartTypeService.GetByIdAsync(_chartTypeId).Result;
 
                 Task.Factory.StartNew(() => DisplayChartAsync(ChartTypeId, DataSetInfoId));                
             }
@@ -397,13 +451,20 @@
 
         chartConfig.AxisGroups.ForEach(group => group.AxisColumns.RemoveAll(c => String.IsNullOrEmpty(c)));    // Remove where axis not selected (E.g. No Z axis)        
 
-        
-
         // Get chart data
         var chartData = ChartDataService.GetChartData(ChartTypeId, chartConfig);
 
+        var displayFunctionName = _chartType.Name switch
+        {
+            "3D Scatter" => "create3DScatterChart",
+            "2D Scatter" => "create2DScatterChart",
+            "Bar chart" => "createBarChart",
+            "Line chart" => "createLineChart",
+            _ => ""
+        };
+
         // Display chart        
-        await JS.InvokeVoidAsync("create2DScatterChart",
+        await JS.InvokeVoidAsync(displayFunctionName,
                       "myChart",
                       chartData.Title,
                       chartData.AxisGroups.Select(ag =>
@@ -419,20 +480,5 @@
                               values = axis.Values
                           })
                       }));
-
-        /*
-        await JS.InvokeVoidAsync("create3DScatterChart",
-                      "myChart",
-                      chartData.Title,
-                      chartData.AxisGroups.Select(ag =>
-                      new {
-                          name = ag.Name,
-                          axes = ag.AxisList.Select(axis =>
-                          new {
-                              name = axis.Name,
-                              values = axis.Values
-                          })
-                      }));    
-        */
     }
 }

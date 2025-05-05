@@ -1,6 +1,7 @@
 ﻿using CFAIProcessor.Interfaces;
 using CFAIProcessor.Models;
 using CFAIProcessor.Utilities;
+using CFCSV.Writer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,38 +24,49 @@ namespace CFAIProcessor.CSV
    
         public void WriteRow(Dictionary<string, string> row)
         {
-            var isFileHeaders = !File.Exists(_file);
+            var isWriteFileHeaders = !File.Exists(_file);
 
-           
-
-            using (var streamWriter = new StreamWriter(_file, true, Encoding.UTF8))
+            var csvWriter = new CSVDictionaryWriter();
+            var rowNew = new Dictionary<string, object>();
+            foreach (var column in row.Keys)
             {
-                var line = new StringBuilder("");
-
-                // Write headers
-                if (isFileHeaders)
-                {
-                    foreach (var column in row.Keys)
-                    {
-                        if (line.Length > 0) line.Append(_delimiter);
-                        line.Append(column);
-                    }
-                    streamWriter.WriteLine(line.ToString());
-                    line.Length = 0;
-
-                    // Create dummy CSV config so that it matches other CSVs
-                    var file = Path.Combine(Path.GetDirectoryName(_file), $"{Path.GetFileNameWithoutExtension(_file)}.json");
-                    CreateCSVConfig(file, row);
-                }
-
-                // Write row
-                foreach (var column in row.Keys)
-                {
-                    if (line.Length > 0) line.Append(_delimiter);
-                    line.Append(row[column]);
-                }
-                streamWriter.WriteLine(line.ToString());
+                csvWriter.AddColumn(column, (row) => row[column].ToString());
+                rowNew.Add(column, row[column]);
             }
+            csvWriter.Write(new[] { rowNew });
+
+            // Create dummy CSV config so that it matches other CSVs
+            var file = Path.Combine(Path.GetDirectoryName(_file), $"{Path.GetFileNameWithoutExtension(_file)}.json");
+            CreateCSVConfig(file, row);
+
+            //using (var streamWriter = new StreamWriter(_file, true, Encoding.UTF8))
+            //{
+            //    var line = new StringBuilder("");
+
+            //    // Write headers
+            //    if (isWriteFileHeaders)
+            //    {
+            //        foreach (var column in row.Keys)
+            //        {
+            //            if (line.Length > 0) line.Append(_delimiter);
+            //            line.Append(column);
+            //        }
+            //        streamWriter.WriteLine(line.ToString());
+            //        line.Length = 0;
+
+            //        // Create dummy CSV config so that it matches other CSVs
+            //        var file = Path.Combine(Path.GetDirectoryName(_file), $"{Path.GetFileNameWithoutExtension(_file)}.json");
+            //        CreateCSVConfig(file, row);
+            //    }
+
+            //    // Write row
+            //    foreach (var column in row.Keys)
+            //    {
+            //        if (line.Length > 0) line.Append(_delimiter);
+            //        line.Append(row[column]);
+            //    }
+            //    streamWriter.WriteLine(line.ToString());
+            //}
         }
 
         private void CreateCSVConfig(string file, Dictionary<string, string> row)

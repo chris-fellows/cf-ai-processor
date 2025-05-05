@@ -37,10 +37,28 @@ namespace CFAIProcessor.Services
                 throw new ArgumentException("Unable to aggregate unless there are columns to copy");
             }
 
+            // For columns that just need to be copied & converted (E.g. Modulo rounding) then add a temporary column to source data table
+            if (copyColumns.Any(c => c.NumberConvertAction != null))
+            {
+                foreach (var copyColumn in copyColumns.Where(c => c.NumberConvertAction != null))
+                {
+                    dataTable.Columns.Add(copyColumn.OutputName, typeof(String));
+                }
+
+                for (int rowIndex = 0; rowIndex < dataTable.Rows.Count; rowIndex++)
+                {
+                    foreach (var copyColumn in copyColumns)
+                    {
+                        dataTable.Rows[rowIndex][copyColumn.OutputName] = GetSourceColumnValue(dataTable.Rows[rowIndex][copyColumn.InputName], copyColumn);
+                        //var value = dataTable.Rows[rowIndex][copyColumn.OutputName];
+                    }
+                }
+            }
+
             // Process each aggregage column with a group by:
             // 1) Get all column values for the grouping.
             // 2) Loop through each distinct set of column values and aggregate.
-            foreach(var groupByColumn in groupByColumns)
+            foreach (var groupByColumn in groupByColumns)
             {
                 // Get all column values
                 var allColumnValues = GetGroupByColumnValues(dataTable, groupByColumn);
@@ -49,7 +67,7 @@ namespace CFAIProcessor.Services
                 var destColumnNames = new List<string>();
                 foreach (var columnName in groupByColumn.GroupByColumnInternalNames)
                 {
-                    var copyColumn = copyColumns.FirstOrDefault(c => c.InputName == columnName);
+                    var copyColumn = copyColumns.FirstOrDefault(c => c.InputName == columnName || c.OutputName == columnName); // Check OutputName for converted columns
                     if (copyColumn == null)    // Error
                     {
                         // Column is not specified for destination. We need the column to exist.
@@ -269,9 +287,7 @@ namespace CFAIProcessor.Services
         }
 
         /// <summary>
-        /// Gets aggregated value.
-        /// 
-        /// Note than we don't use sourceGroupColumnNames due to the way that we firstly copy over raw values first.
+        /// Gets aggregated value for column from rows        
         /// </summary>
         /// <param name="sourceRows"></param>
         /// <param name="sourceColumnName"></param>
@@ -288,20 +304,20 @@ namespace CFAIProcessor.Services
             var values = new Dictionary<AggregateActions, double>();
             values.Add(AggregateActions.Min, Double.MaxValue);
             values.Add(AggregateActions.Max, Double.MinValue);
-            values.Add(AggregateActions.Avg, 0);
-            values.Add(AggregateActions.RowCount, 0);
+            values.Add(AggregateActions.Avg, 0);            
 
+            var distinctValues = new HashSet<double>();
             foreach (var sourceRow in sourceRows)
             {
                 var value = Convert.ToDouble(sourceRow[sourceColumnName]);
 
-                values[AggregateActions.Avg] += value;
-                values[AggregateActions.RowCount] += 1;
+                values[AggregateActions.Avg] += value;                
 
                 if (value < values[AggregateActions.Min]) values[AggregateActions.Min] = value;
 
                 if (value > values[AggregateActions.Max]) values[AggregateActions.Max] = value;
 
+                if (!distinctValues.Contains(value)) distinctValues.Add(value);
             }            
 
             if (decimalPlaces != null)
@@ -311,7 +327,8 @@ namespace CFAIProcessor.Services
                     AggregateActions.Avg => Double.Round(values[AggregateActions.Avg] / sourceRows.Length, decimalPlaces.Value),
                     AggregateActions.Max => Double.Round(values[AggregateActions.Max], decimalPlaces.Value),
                     AggregateActions.Min => Double.Round(values[AggregateActions.Min], decimalPlaces.Value),
-                    AggregateActions.RowCount => values[AggregateActions.RowCount],
+                    AggregateActions.RowCount => sourceRows.Length,
+                    AggregateActions.ValueCount => distinctValues.Count,
                     _ => throw new ArgumentException("Invalid aggregate action")    // None
                 };
             }
@@ -321,7 +338,8 @@ namespace CFAIProcessor.Services
                 AggregateActions.Avg => values[AggregateActions.Avg] / sourceRows.Length,
                 AggregateActions.Max => values[AggregateActions.Max],
                 AggregateActions.Min => values[AggregateActions.Min],
-                AggregateActions.RowCount => values[AggregateActions.RowCount],
+                AggregateActions.RowCount => sourceRows.Length,
+                AggregateActions.ValueCount => distinctValues.Count,
                 _ => throw new ArgumentException("Invalid aggregate action")    // None
             };
         }
