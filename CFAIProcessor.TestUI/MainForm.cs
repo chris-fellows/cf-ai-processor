@@ -1,5 +1,6 @@
 using CFAIProcessor.CSV;
 using CFAIProcessor.Enums;
+using CFAIProcessor.ImageClassify;
 using CFAIProcessor.Models;
 using CFAIProcessor.Prediction;
 using CFAIProcessor.Services;
@@ -17,7 +18,7 @@ namespace CFAIProcessor.TestUI
         {
             InitializeComponent();
 
-            TestAggregateCSV();
+            //TestAggregateCSV();
 
             //TestWeightedRandom();
 
@@ -116,7 +117,7 @@ namespace CFAIProcessor.TestUI
             var aggregateFile = "D:\\Data\\Dev\\C#\\cf-ai-processor-local\\predict-aggregate.txt";
             var aggregateConfigFile = "D:\\Data\\Dev\\C#\\cf-ai-processor-local\\predict-aggregate.json";
             SaveDataTable(dataTableNew, aggregateFile, (Char)9, aggregateConfigFile);
-            
+
             int xxx = 100;
         }
 
@@ -130,7 +131,7 @@ namespace CFAIProcessor.TestUI
                 };
 
                 var line = new StringBuilder("");
-                for(int index =0; index < dataTable.Columns.Count;  index++)
+                for (int index = 0; index < dataTable.Columns.Count; index++)
                 {
                     if (line.Length > 0) line.Append(delimiter);
                     line.Append(dataTable.Columns[index].ColumnName);
@@ -138,10 +139,10 @@ namespace CFAIProcessor.TestUI
                     csvConfig.Columns.Add(new CSVColumnConfig()
                     {
                         InternalName = dataTable.Columns[index].ColumnName,
-                        ExternalName = dataTable.Columns[index].ColumnName                        
+                        ExternalName = dataTable.Columns[index].ColumnName
                     });
                 }
-                writer.WriteLine(line.ToString());                
+                writer.WriteLine(line.ToString());
 
                 for (int rowIndex = 0; rowIndex < dataTable.Rows.Count; rowIndex++)
                 {
@@ -228,7 +229,7 @@ namespace CFAIProcessor.TestUI
 
             prediction.RunTrainAndPredictModel(trainDataFile, trainConfigFile,
                         testDataFile, testConfigFile,
-                        predictFile, cancellationTokenSource.Token);                        
+                        predictFile, cancellationTokenSource.Token);
 
             int xxx = 1000;
         }
@@ -247,6 +248,18 @@ namespace CFAIProcessor.TestUI
                         testDataFile, testConfigFile);
 
             int xxx = 1000;
+        }
+
+        private void btnImageClassify_Click(object sender, EventArgs e)
+        {
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            var catsAndDogsImageClassify = new CatAndDogImageClassify();
+
+            catsAndDogsImageClassify.RunTrainAndPredictModel(cancellationTokenSource.Token);
+
+            int xxx = 1000;
+
         }
     }
 }

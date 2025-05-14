@@ -30,6 +30,7 @@
         {
             btnTest1 = new Button();
             btnTest2 = new Button();
+            btnImageClassify = new Button();
             SuspendLayout();
             // 
             // btnTest1
@@ -52,11 +53,22 @@
             btnTest2.UseVisualStyleBackColor = true;
             btnTest2.Click += btnTest2_Click;
             // 
+            // btnImageClassify
+            // 
+            btnImageClassify.Location = new Point(337, 68);
+            btnImageClassify.Name = "btnImageClassify";
+            btnImageClassify.Size = new Size(75, 23);
+            btnImageClassify.TabIndex = 2;
+            btnImageClassify.Text = "Image Classify";
+            btnImageClassify.UseVisualStyleBackColor = true;
+            btnImageClassify.Click += btnImageClassify_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(881, 494);
+            Controls.Add(btnImageClassify);
             Controls.Add(btnTest2);
             Controls.Add(btnTest1);
             Name = "MainForm";
@@ -68,5 +80,6 @@
 
         private Button btnTest1;
         private Button btnTest2;
+        private Button btnImageClassify;
     }
 }
