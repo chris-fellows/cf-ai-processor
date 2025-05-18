@@ -41,6 +41,15 @@ var configFolder = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly
 //Directory.Delete(configFolder, true);
 
 // Add data services
+builder.Services.AddScoped<IAuditEventService>((scope) =>
+{
+    return new XmlAuditEventService(Path.Combine(configFolder, "AuditEvent"),
+                scope.GetRequiredService<IAuditEventProcessorService>());
+});
+builder.Services.AddScoped<IAuditEventTypeService>((scope) =>
+{
+    return new XmlAuditEventTypeService(Path.Combine(configFolder, "AuditEventType"));
+});
 builder.Services.AddScoped<IChartTypeService>((scope) =>
 {
     return new XmlChartTypeService(Path.Combine(configFolder, "ChartType"));
@@ -48,6 +57,10 @@ builder.Services.AddScoped<IChartTypeService>((scope) =>
 builder.Services.AddScoped<IPredictionModelService>((scope) =>
 {
     return new XmlPredictionModelService(Path.Combine(configFolder, "PredictionModel"));
+});
+builder.Services.AddScoped<ISystemValueTypeService>((scope) =>
+{
+    return new XmlSystemValueTypeService(Path.Combine(configFolder, "SystemValueType"));
 });
 builder.Services.AddScoped<IUserService>((scope) =>
 {
@@ -61,6 +74,10 @@ builder.Services.AddScoped<IDataSetInfoService>((scope) =>
 
 // Add toast service
 builder.Services.AddSingleton<IToastService, ToastService>();
+
+builder.Services.AddScoped<IAuditEventFactory, AuditEventFactory>();
+
+builder.Services.AddScoped<IAuditEventProcessorService, AuditEventProcessorService>();
 
 builder.Services.AddScoped<IRequestContextService, RequestContextService>();
 
@@ -102,8 +119,10 @@ builder.Services.AddSingleton<ISystemTaskList>((scope) =>
 // Add seed data. Only need it as a one-off
 if (registerSeedDataLoad)
 {
+    builder.Services.AddKeyedScoped<IEntityReader<AuditEventType>, AuditEventTypeSeed1>("AuditEventTypeSeed");
     builder.Services.AddKeyedScoped<IEntityReader<ChartType>, ChartTypeSeed1>("ChartTypeSeed");
-    builder.Services.AddKeyedScoped<IEntityReader<User>, UserSeed1>("UserSeed");    
+    builder.Services.AddKeyedScoped<IEntityReader<User>, UserSeed1>("UserSeed");
+    builder.Services.AddKeyedScoped<IEntityReader<SystemValueType>, SystemValueTypeSeed1>("SystemValueTypeSeed");
 }
 
 // Add background service for system tasks

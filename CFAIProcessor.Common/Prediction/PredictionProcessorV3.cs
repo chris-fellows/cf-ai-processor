@@ -24,7 +24,7 @@ namespace CFAIProcessor.Prediction
     {
         public PredictionModel Train(PredictionTrainConfig predictionTrainConfig,
                           IPredictionDataSource trainDataSource,
-                          IPredictionDataSource validDataSource,
+                          IPredictionDataSource validDataSource,                          
                           CancellationToken cancellationToken)
         {
             var predictionModel = new PredictionModel()
@@ -33,7 +33,8 @@ namespace CFAIProcessor.Prediction
                 Name = predictionTrainConfig.ModelName,
                 DataSetInfoId = predictionTrainConfig.DataSetInfoId,
                 ModelFolder = predictionTrainConfig.ModelFolder,
-                TrainConfig = predictionTrainConfig
+                TrainConfig = predictionTrainConfig,
+                CreatedUserId = predictionTrainConfig.UserId
             };
 
             var model = GetInitialModel();

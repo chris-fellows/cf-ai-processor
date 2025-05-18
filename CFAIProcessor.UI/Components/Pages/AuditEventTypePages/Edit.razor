@@ -1,0 +1,155 @@
+﻿@page "/auditeventtypes/edit"
+@using Microsoft.EntityFrameworkCore
+@using CFAIProcessor.Interfaces
+@using CFAIProcessor.Models
+@using CFAIProcessor.Utilities
+@using CFAIProcessor.UI.Utilities
+@inject NavigationManager NavigationManager
+@inject IAuditEventTypeService AuditEventTypeService
+@inject IFileSecurityCheckerService FileSecurityCheckerService
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>AuditEventType</h2>
+<hr />
+@if (AuditEventType is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="AuditEventType" OnValidSubmit="UpdateAuditEventType" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="AuditEventType.Id" value="@AuditEventType.Id" />
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name:</label>
+                    <InputText id="name" @bind-Value="AuditEventType.Name" class="form-control" aria-required="true"/>
+                    <ValidationMessage For="() => AuditEventType.Name" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="usercolor" class="form-label">Color:</label>
+                    <input id="usercolor " type="color" @bind-value="AuditEventType.Color" />
+                    <ValidationMessage For="() => AuditEventType.Color" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="auditeventtypeimage" class="form-label">Image:</label>
+                    <img id="auditeventtypeimage" src="@GetAuditEventTypeImageSource(AuditEventType)" />
+                    <InputFile id="imagefile" OnChange="OnImageFileChangeAsync" />
+                    <ValidationMessage For="() => AuditEventType.ImageSource" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/auditeventtypes">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private string Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private AuditEventType? AuditEventType { get; set; }
+
+    private string _newImageFile = String.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        //using var context = DbFactory.CreateDbContext();
+        //AuditEventType ??= await context.AuditEventType.FirstOrDefaultAsync(m => m.Id == Id);
+        AuditEventType = await AuditEventTypeService.GetByIdAsync(Id);
+
+        if (AuditEventType is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateAuditEventType()
+    {
+        //using var context = DbFactory.CreateDbContext();
+        //context.Attach(AuditEventType!).State = EntityState.Modified;
+
+        try
+        {
+            // Save image as [AuditEventTypeId][Extension]
+            if (!String.IsNullOrEmpty(_newImageFile))
+            {
+                AuditEventType.ImageSource = Path.GetFileName(_newImageFile);
+
+                var localFile = Path.Combine(ConfigUtilities.AuditEventTypeImageLocalFolder, AuditEventType.ImageSource);
+                if (File.Exists(localFile))
+                {
+                    File.Delete(localFile);
+                }
+                File.Move(_newImageFile, localFile);
+                _newImageFile = "";
+            }
+
+            await AuditEventTypeService.UpdateAsync(AuditEventType);
+            //await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!AuditEventTypeExists(AuditEventType!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/auditeventtypes");
+    }
+
+    private bool AuditEventTypeExists(string id)
+    {
+        return AuditEventTypeService.GetByIdAsync(id).Result != null;
+        //using var context = DbFactory.CreateDbContext();
+        //return context.AuditEventType.Any(e => e.Id == id);
+    }
+
+    private string GetAuditEventTypeImageSource(AuditEventType auditEventType)
+    {
+        return $"../images/audit_event_types/{auditEventType.ImageSource}";
+    }
+
+    private async Task OnImageFileChangeAsync(InputFileChangeEventArgs eventArgs)
+    {
+        // Check file size
+        if (eventArgs.File.Size > ConfigUtilities.MaxUploadImageSize)
+        {
+            throw new ArgumentException("File is too big");
+        }
+
+        // Save to local file
+        using (var stream = eventArgs.File.OpenReadStream())
+        {
+            _newImageFile = Path.Combine(ConfigUtilities.ImageTempFilesRootFolder, "audit_event_types", $"{AuditEventType.Id}{Path.GetExtension(eventArgs.File.Name)}");
+            using (var streamWriter = new FileStream(_newImageFile, FileMode.Create))
+            {
+                await stream.CopyToAsync(streamWriter);
+            }
+
+            // Check that file can be uploaded
+            var content = File.ReadAllBytes(_newImageFile);
+            if (!(await FileSecurityCheckerService.ValidateCanUploadImageAsync(content)))
+            {
+                File.Delete(_newImageFile);
+                _newImageFile = "";
+            }
+        }
+    }
+}

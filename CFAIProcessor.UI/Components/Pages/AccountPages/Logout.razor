@@ -5,6 +5,9 @@
 @using CFAIProcessor.Interfaces
 
 @inject NavigationManager NavigationManager
+@inject IAuditEventFactory AuditEventFactory
+@inject IAuditEventService AuditEventService
+@inject IRequestContextService RequestContextService
 @inject IUserService UserService
 
 <div class="row">
@@ -32,16 +35,16 @@
 
         if (HttpContext.User.Identity.IsAuthenticated)
         {
-            //await AddAuditEventLogOutAsync(RequestContextService.UserId);
+            await AddAuditEventLogOutAsync(RequestContextService.UserId);
 
             await HttpContext.SignOutAsync();
             NavigationManager.NavigateTo("/logout", true);
         }
     }
 
-    // private async Task AddAuditEventLogOutAsync(string userId)
-    // {
-    //     var auditEvent = AuditEventFactory.CreateUserLogOut(userId, userId);
-    //     await AuditEventService.AddAsync(auditEvent);
-    // }
+    private async Task AddAuditEventLogOutAsync(string userId)
+    {
+        var auditEvent = AuditEventFactory.CreateUserLogOut(userId, userId);
+        await AuditEventService.AddAsync(auditEvent);
+    }
 }

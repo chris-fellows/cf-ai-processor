@@ -1,0 +1,328 @@
+﻿@page "/auditevents"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using CFAIProcessor.Constants
+@using CFAIProcessor.EntityWriter
+@using CFAIProcessor.Interfaces
+@using CFAIProcessor.Models
+@using CFAIProcessor.Utilities
+@using CFAIProcessor.UI.Utilities
+@using CFUtilities
+@using CFUtilities.Utilities
+@inject IAuditEventService AuditEventService
+@inject IAuditEventTypeService AuditEventTypeService
+@inject ISystemValueTypeService SystemValueTypeService
+@inject IUserService UserService
+
+@using System.IO
+@inject IJSRuntime JS
+
+@rendermode InteractiveServer
+@attribute [StreamRendering]
+@attribute [Authorize(Roles = "Administrator,User")]
+
+<script>
+    window.downloadFileFromStream = async (fileName, contentStreamReference) =>
+    {
+        const arrayBuffer = await contentStreamReference.arrayBuffer();
+        const blob = new Blob([arrayBuffer]);
+        const url = URL.createObjectURL(blob);
+        const anchorElement = document.createElement('a');
+        anchorElement.href = url;
+        anchorElement.download = fileName ?? '';
+        anchorElement.click();
+        anchorElement.remove();
+        URL.revokeObjectURL(url);
+    }
+</script>
+
+<PageTitle>Index</PageTitle>
+
+<h1>Audit Event List</h1>
+
+<ActivityIndicator IsBusy="@IsBusy" />
+
+<p>
+    <a href="auditevents/create">Create New</a>
+    <button @onclick="DownloadCSVAsync" class="btn btn-primary">Download</button>
+    <button @onclick="ResetFiltersAsync" class="btn btn-primary">Reset Filters</button>
+
+    <br />
+    <div style="display: inline-block">       
+        <label for="auditeventtypeid">Type:</label>
+        <InputSelect @bind-Value="@FilterAuditEventTypeId">
+            @foreach (AuditEventType auditEventType in AuditEventTypes)
+            {
+                <option value="@auditEventType.Id">@auditEventType.Name</option>
+            }
+        </InputSelect>
+
+        <label for="createduserid">Created User:</label>
+        <InputSelect @bind-Value="@FilterCreatedUserId">
+            @foreach (User user in Users)
+            {
+                <option value="@user.Id">@user.Name</option>
+            }
+        </InputSelect>
+
+        <label for="createdate">Created Time:</label>
+        <InputSelect @bind-Value="@FilterCreatedDateRangeId">
+            @foreach (DateRangeFilter dateRangeFilter in CreatedDateRangeFilters)
+            {
+                <option value="@dateRangeFilter.Id">@dateRangeFilter.Name</option>
+            }
+        </InputSelect>
+    </div>
+</p>
+
+@if (AuditEventsQueryable == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <QuickGrid Class="table" Items="@AuditEventsQueryable" Pagination="@Pagination">
+        <PropertyColumn Title="Created Time" Property="auditevent => auditevent.CreatedDateTime" />        
+
+        <TemplateColumn Title="Type" Context="auditevent">
+            <ImageAndText ImageSource="@(GetAuditEventTypeImageSource(auditevent))" Text="@(GetAuditEventTypeName(auditevent))" />
+        </TemplateColumn>
+
+        <TemplateColumn Title="Created User" Context="auditevent">
+            <ImageAndText ImageSource="@(GetCreatedUserImageSource(auditevent))" Text="@(GetCreatedUserName(auditevent))" />
+        </TemplateColumn>
+
+        <TemplateColumn Title="Issue" Context="auditevent">
+            <a href="@($"issues/details?id={GetIssueId(auditevent)}")">@($"{GetIssueReference(auditevent)}")</a>
+        </TemplateColumn>    
+
+        <TemplateColumn Title="User" Context="auditevent">
+            <ImageAndText ImageSource="@(GetUserImageSource(auditevent))" Text="@(GetUserName(auditevent))" />
+        </TemplateColumn>
+
+        <TemplateColumn Context="auditevent">        
+            <a href="@($"auditevents/details?id={auditevent.Id}")">Details</a>        
+        </TemplateColumn>
+    </QuickGrid>
+
+    <Paginator State="@Pagination" />
+}
+
+@code {
+    private List<AuditEventType> AuditEventTypes = new();   
+    private List<SystemValueType> SystemValueTypes = new();
+    private List<User> Users = new();
+
+    private PaginationState Pagination = new PaginationState() { ItemsPerPage = ConfigUtilities.ItemsPerListPage };
+
+    private IQueryable<AuditEvent>? AuditEventsQueryable;
+
+    private List<DateRangeFilter> CreatedDateRangeFilters = new();
+
+    // Cache data for UI performance otherwise it's slow to load per issue
+    private Dictionary<string, string> IssueReferenceById = new();
+    private Dictionary<string, string> UserNameById = new();
+    private Dictionary<string, string> UserImageSourceById = new();
+    private Dictionary<string, string> IssueIdByIssueCommentId = new();    
+    //private Dictionary<string, string> CreatedUserIdByIssueCommentId = new();
+
+    private bool IsBusy { get; set; }
+
+    // Filter on issue status
+    private string _filterAuditEventTypeId = UIUtilities.AnyId;
+    public string FilterAuditEventTypeId
+    {
+        get { return _filterAuditEventTypeId; }
+        set
+        {
+            if (_filterAuditEventTypeId != value)
+            {
+                _filterAuditEventTypeId = value;
+                RefreshAuditEvents();
+            }
+        }
+    }
+
+    // Filter on created user
+    private string _filterCreatedUserId = UIUtilities.AnyId;
+    public string FilterCreatedUserId
+    {
+        get { return _filterCreatedUserId; }
+        set
+        {
+            if (_filterCreatedUserId != value)
+            {
+                _filterCreatedUserId = value;
+                RefreshAuditEvents();
+            }
+        }
+    }
+
+    // Filter on created
+    private string _filterCreatedDateRangeId = String.Empty;
+    public string FilterCreatedDateRangeId
+    {
+        get { return _filterCreatedDateRangeId; }
+        set
+        {
+            if (_filterCreatedDateRangeId != value)
+            {
+                _filterCreatedDateRangeId = value;
+                RefreshAuditEvents();
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsBusy = true;
+
+        AuditEventTypes = AuditEventTypeService.GetAll();        
+        SystemValueTypes = SystemValueTypeService.GetAll();
+        Users = UserService.GetAll();
+
+        // Add Any user
+        UIUtilities.AddAny(Users);
+
+        CreatedDateRangeFilters = UIUtilities.GetDateRangeFilters();
+        _filterCreatedDateRangeId = CreatedDateRangeFilters.First().Id;
+
+        // Add Any option
+        UIUtilities.AddAny(AuditEventTypes);
+
+        RefreshAuditEvents();
+    }
+
+    private string GetAuditEventTypeName(AuditEvent auditEvent)
+    {
+        return AuditEventTypes.First(t => t.Id == auditEvent.TypeId).Name;
+    }
+
+    private string GetAuditEventTypeImageSource(AuditEvent auditEvent)
+    {
+        return $"../images/audit_event_types/{AuditEventTypes.First(t => t.Id == auditEvent.TypeId).ImageSource}";
+    } 
+
+    /// <summary>
+    /// Gets UserId (if any) from audit event. Not the created user.
+    /// </summary>
+    /// <param name="auditEvent"></param>
+    /// <returns></returns>
+    private string GetUserId(AuditEvent auditEvent)
+    {
+        var userIdSystemValueType = SystemValueTypes.First(i => i.Name == SystemValueTypeNames.UserId);
+        var userIdParameter = auditEvent.Parameters.FirstOrDefault(p => p.SystemValueTypeId == userIdSystemValueType.Id);
+
+        return userIdParameter == null ? "" : userIdParameter.Value;
+    }
+
+    /// <summary>
+    /// Gets user name for audit event. E.g. User that logged in/logged out. Not the created user
+    /// </summary>
+    /// <param name="auditEvent"></param>
+    /// <returns></returns>
+    private string GetUserName(AuditEvent auditEvent)
+    {
+        var userId = GetUserId(auditEvent);
+
+        if (UserNameById.ContainsKey(userId)) return UserNameById[userId];
+        return "";
+    }    
+
+    private string GetUserImageSource(AuditEvent auditEvent)
+    {
+        var userId = GetUserId(auditEvent);
+
+        if (UserImageSourceById.ContainsKey(userId)) return $"../images/users/{UserImageSourceById[userId]}";
+        return "";
+    }
+
+    /// <summary>
+    /// Gets user name for user who created issue
+    /// </summary>
+    /// <param name="auditEvent"></param>
+    /// <returns></returns>
+    private string GetCreatedUserName(AuditEvent auditEvent)
+    {        
+        if (UserNameById.ContainsKey(auditEvent.CreatedUserId)) return UserNameById[auditEvent.CreatedUserId];
+        return "";
+    }
+
+    /// <summary>
+    /// Gets user image for user who created issue
+    /// </summary>
+    /// <param name="auditEvent"></param>
+    /// <returns></returns>
+    private string GetCreatedUserImageSource(AuditEvent auditEvent)
+    {    
+        if (UserImageSourceById.ContainsKey(auditEvent.CreatedUserId)) return $"../images/users/{UserImageSourceById[auditEvent.CreatedUserId]}";
+        return "";
+    }
+
+    private void RefreshAuditEvents()
+    {
+        IsBusy = true;
+
+        // Get audit events
+        AuditEventsQueryable = (AuditEventService.GetByFilter(GetAuditEventFilter()))
+                    .OrderBy(e => e.CreatedDateTime)
+                    .AsQueryable();
+
+      
+        IsBusy = false;
+
+        //if (notifyStateHasChanged) StateHasChanged();
+    }
+
+    private AuditEventFilter GetAuditEventFilter()
+    {
+        var createdDateRange = this.CreatedDateRangeFilters.First(f => f.Id == FilterCreatedDateRangeId);
+
+        // Set filter
+        var auditEventFilter = new AuditEventFilter()
+            {
+                CreatedDateTimeFrom = createdDateRange.FromDate == DateTimeOffset.MinValue ? null : createdDateRange.FromDate,
+                CreatedDateTimeTo = createdDateRange.ToDate == DateTimeOffset.MaxValue ? null :  createdDateRange.ToDate,
+                CreatedUserIds = (FilterCreatedUserId == UIUtilities.AnyId ? null : new() { FilterCreatedUserId }),
+                AuditEventTypeIds = (FilterAuditEventTypeId == UIUtilities.AnyId ? null : new() { FilterAuditEventTypeId }),                
+            };
+        return auditEventFilter;
+    }
+
+    private async Task DownloadCSVAsync()
+    {        
+        using (var session = new DisposableActionsSession())
+        {
+            IsBusy = true;
+            session.AddAction(() => IsBusy = false);
+
+            // Get file stream
+            var tempFile = Path.GetTempFileName();
+            session.AddAction(() =>
+            {
+                if (File.Exists(tempFile)) File.Delete(tempFile);
+            });
+
+            var entityWriter = new CSVAuditEventWriter(tempFile, (Char)9, System.Text.Encoding.UTF8, 
+                                                    AuditEventTypeService);
+
+            entityWriter.Write(AuditEventsQueryable.ToList());
+            var fileStream = File.OpenRead(tempFile);
+
+            using var streamRef = new DotNetStreamReference(stream: fileStream);
+
+            await JS.InvokeVoidAsync("downloadFileFromStream", "AuditEvents.txt", streamRef);
+        }
+    }
+
+    private async Task ResetFiltersAsync()
+    {
+        _filterCreatedDateRangeId = CreatedDateRangeFilters.First().Id;
+        _filterCreatedUserId = UIUtilities.AnyId;
+        _filterAuditEventTypeId = UIUtilities.AnyId;        
+
+        RefreshAuditEvents();
+    }    
+
+    //public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

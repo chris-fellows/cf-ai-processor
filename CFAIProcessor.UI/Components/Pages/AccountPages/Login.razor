@@ -7,6 +7,8 @@
 @using System.Security.Claims
 
 @inject NavigationManager NavigationManager
+@inject IAuditEventFactory AuditEventFactory
+@inject IAuditEventService AuditEventService
 @inject IUserService UserService
 
 <div clsss="row">
@@ -53,7 +55,7 @@
         if (user == null)
         {
             // Add audit event
-            //await AddAuditEventLogInErrorAsync(Model.Username);
+            await AddAuditEventLogInErrorAsync(Model.Username);
 
             ErrorMessage = "Invalid username or password";
         }
@@ -86,16 +88,16 @@
         }
     }
 
-    // private async Task AddAuditEventLogInSuccessAsync(string userId)
-    // {
-    //     var auditEvent = AuditEventFactory.CreateUserLogInSuccess(userId, userId);
-    //     await AuditEventService.AddAsync(auditEvent);
-    // }
+    private async Task AddAuditEventLogInSuccessAsync(string userId)
+    {
+        var auditEvent = AuditEventFactory.CreateUserLogInSuccess(userId, userId);
+        await AuditEventService.AddAsync(auditEvent);
+    }
 
-    // private async Task AddAuditEventLogInErrorAsync(string username)
-    // {
-    //     var systemUser = UserService.GetAll().First(u => u.GetUserType() == Enums.UserTypes.System);
-    //     var auditEvent = AuditEventFactory.CreateUserLogInError(systemUser.Id, username);
-    //     await AuditEventService.AddAsync(auditEvent);
-    // }
+    private async Task AddAuditEventLogInErrorAsync(string username)
+    {
+        var systemUser = UserService.GetAll().First(u => u.GetUserType() == Enums.UserTypes.System);
+        var auditEvent = AuditEventFactory.CreateUserLogInError(systemUser.Id, username);
+        await AuditEventService.AddAsync(auditEvent);
+    }
 }

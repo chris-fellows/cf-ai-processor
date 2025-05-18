@@ -14,5 +14,7 @@
         public string ModelFolder { get; set; } = String.Empty;
 
         public PredictionTrainConfig TrainConfig { get; set; } = new();
+
+        public string CreatedUserId { get; set; } = String.Empty;        
     }
 }

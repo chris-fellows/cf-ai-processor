@@ -9,6 +9,7 @@
 @inject NavigationManager NavigationManager
 @inject IDataSetInfoService DataSetInfoService
 @inject ISystemTaskList SystemTaskList
+@inject IRequestContextService RequestContextService
 
 @rendermode InteractiveServer
 @attribute [StreamRendering]
@@ -144,6 +145,7 @@ else
             LearningRate = 0.001f,
             NormaliseValues = true,
             MaxTrainRows = Int32.MaxValue,
+            UserId = RequestContextService.UserId
             //ModelFolder = 
         };
 

@@ -26,5 +26,7 @@ namespace CFAIProcessor.Models
         public int MaxTrainRows { get; set; } = Int32.MaxValue;
 
         public List<DataSetColumnConfig> ColumnConfigs { get; set; } = new();
+
+        public string UserId { get; set; } = String.Empty;
     }
 }

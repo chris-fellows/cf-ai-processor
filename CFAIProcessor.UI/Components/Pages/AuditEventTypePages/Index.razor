@@ -1,0 +1,51 @@
+﻿@page "/auditeventtypes"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using CFAIProcessor.Interfaces
+@using CFAIProcessor.Models
+@using CFAIProcessor.UI.Utilities
+@inject IAuditEventTypeService AuditEventTypeService
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="auditeventtypes/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="@AuditEventTypes">
+    <PropertyColumn Property="auditeventtype => auditeventtype.Name" />
+
+    <TemplateColumn Title="Color" Context="auditeventtype">
+        <input type="color" value="@GetAuditEventTypeColor(@auditeventtype)" />
+    </TemplateColumn>
+
+    <TemplateColumn Title="Image" Context="auditeventtype">
+        <img class="entityimage" src="../images/audit_event_types/@auditeventtype.ImageSource" />
+    </TemplateColumn>
+
+    <TemplateColumn Context="auditeventtype">
+        <a href="@($"auditeventtypes/edit?id={auditeventtype.Id}")">Edit</a> |
+        <a href="@($"auditeventtypes/details?id={auditeventtype.Id}")">Details</a> |
+        <a href="@($"auditeventtypes/delete?id={auditeventtype.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private IQueryable<AuditEventType>? AuditEventTypes;
+
+    protected override void OnInitialized()
+    {
+        //context = DbFactory.CreateDbContext();
+
+        AuditEventTypes = AuditEventTypeService.GetAll().AsQueryable();
+    }
+
+    private string GetAuditEventTypeColor(AuditEventType auditEventType)
+    {
+        return HTMLUtilities.GetHTMLColor(auditEventType.Color);
+    }
+
+    //public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}
