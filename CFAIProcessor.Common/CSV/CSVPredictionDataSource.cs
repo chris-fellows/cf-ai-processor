@@ -57,7 +57,7 @@ namespace CFAIProcessor.CSV
                 features[rowIndex] = rowValues;
 
                 // Exit if row limit set
-                if (maxRows != null && rowIndex + 1 >= maxRows) break;
+                if (maxRows != null && maxRows > 0 && rowIndex + 1 >= maxRows) break;
             }
 
             return features;
@@ -105,7 +105,7 @@ namespace CFAIProcessor.CSV
                 */
 
                 // Exit if row limit set
-                if (maxRows != null && rowIndex + 1 >= maxRows) break;                
+                if (maxRows != null && maxRows > 0 && rowIndex + 1 >= maxRows) break;                
             }
 
             return labels;

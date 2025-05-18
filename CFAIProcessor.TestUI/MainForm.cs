@@ -213,7 +213,7 @@ namespace CFAIProcessor.TestUI
 
         private void btnTest1_Click(object sender, EventArgs e)
         {
-            string folder = "D:\\Data\\Dev\\C#\\cf-ai-processor-local";
+            string folder = "D:\\Data\\Dev\\C#\\cf-ai-processor-local\\Data Sets";
 
             var trainDataFile = Path.Combine(folder, "train-data-house-sales.txt");
             var trainConfigFile = Path.Combine(folder, "train-data-house-sales.json");
@@ -221,7 +221,7 @@ namespace CFAIProcessor.TestUI
             var testDataFile = Path.Combine(folder, "test-data-house-sales.txt");
             var testConfigFile = Path.Combine(folder, "test-data-house-sales.json");
 
-            var predictFile = Path.Combine(folder, "predict-output.txt");
+            var predictFile = Path.Combine(folder, "predict-output-V2.txt");
 
             var prediction = new HousePricePrediction();
 

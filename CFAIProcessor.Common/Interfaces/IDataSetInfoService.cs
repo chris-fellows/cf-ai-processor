@@ -10,5 +10,9 @@ namespace CFAIProcessor.Interfaces
     public interface IDataSetInfoService
     {
         List<DataSetInfo> GetAll();
+
+        DataSetInfo? GetById(string id);
+
+        void Add(DataSetInfo dataSetInfo, string tempFile);
     }
 }

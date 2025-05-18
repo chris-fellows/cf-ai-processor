@@ -1,0 +1,223 @@
+﻿@page "/predictions/train"
+
+@using CFAIProcessor.Constants
+@using CFAIProcessor.Interfaces
+@using CFAIProcessor.Models
+@using CFAIProcessor.SystemTask
+@using CFAIProcessor.UI.Utilities
+
+@inject NavigationManager NavigationManager
+@inject IDataSetInfoService DataSetInfoService
+@inject ISystemTaskList SystemTaskList
+
+@rendermode InteractiveServer
+@attribute [StreamRendering]
+@attribute [Authorize(Roles = "Administrator,User")]
+
+<h3>Train</h3>
+
+<hr />
+@if (DataSetInfo is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="PredictionTrainConfig" OnValidSubmit="RunTrain" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>                
+
+                <div class="mb-3">
+                    <label for="name" class="form-label">Model name:</label> 
+                    <InputText id="name" @bind-Value="PredictionTrainConfig.ModelName" class="form-control" /> 
+                    <ValidationMessage For="() => PredictionTrainConfig.ModelName" class="text-danger" /> 
+                </div>        
+
+                <div class="mb-3">
+                    <label for="TrainingEpochs" class="form-label">Epochs:</label>
+                    <InputNumber id="TrainingEpochs"  @bind-Value="PredictionTrainConfig.TrainingEpochs" min="0" max="Int32.MaxValue" type="range"/>
+                    <ValidationMessage For="() => PredictionTrainConfig.TrainingEpochs" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="NormaliseValues" class="form-label">Normalise values:</label>
+                    <InputCheckbox id="NormaliseValues" @bind-Value="PredictionTrainConfig.NormaliseValues" class="form-check-input" />
+                    <ValidationMessage For="() => PredictionTrainConfig.NormaliseValues" class="text-danger" />
+                </div>
+                
+                <div class="mb-3">
+                    <label for="LearningRate" class="form-label">Learning rate:</label>
+                    <InputNumber id="LearningRate"  @bind-Value="PredictionTrainConfig.LearningRate" min="0" max="Int32.MaxValue" step="0.001" type="range"/>                    
+                    <ValidationMessage For="() => PredictionTrainConfig.LearningRate" class="text-danger" />
+                </div>
+
+                @foreach(var columnConfig in ColumnConfigs)
+                {
+                    <div class="mb-3">                        
+                        <dd class="col-sm-10">Column: @columnConfig.ExternalName</dd>
+                    </div>
+
+                    <div class="mb-3">
+                       <label for="ColumnConfigMinValue" class="form-label">Min value for normalisation:</label>
+                        <InputNumber id="ColumnConfigMinValue" @bind-Value="@columnConfig.MinValue" min="0" max="Int32.MaxValue" type="range"/>
+                    </div>
+
+                    <div class="mb-3">
+                         <label for="ColumnConfigMaxValue" class="form-label">Max value for normalisation:</label>
+                        <InputNumber id="ColumnConfigMaxValue" @bind-Value="@columnConfig.MaxValue" min="0" max="Int32.MaxValue" type="range"/>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="SelectedColumnType" class="form-label">Column type:</label>
+                        <InputSelect id="SelectedColumnType" @bind-Value="columnConfig.SelectedColumnTypeId" class="form-control">
+                            @foreach (ColumnType columnType in ColumnTypes)
+                            {
+                                @if (columnType.Id == columnConfig.SelectedColumnTypeId)
+                                {
+                                    <option selected value="@columnType.Id">@columnType.Name</option>
+                                }
+                                else
+                                {
+                                    <option value="@columnType.Id">@columnType.Name</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>
+                }
+
+                <button type="submit" class="btn btn-primary">Train</button>
+            </EditForm>            
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/issues">Back to List</a>
+</div>
+
+
+@code {
+    [SupplyParameterFromQuery]
+    private string Id { get; set; }     // DataSetInfo.Id
+
+    private DataSetInfo DataSetInfo { get; set; }
+
+    private PredictionTrainConfig PredictionTrainConfig { get; set; } = new();
+
+    private class ColumnType
+    {
+        public string Id {get; set; } = String.Empty;
+
+        public string Name { get; set; } = String.Empty;
+    }
+
+    private class ColumnConfig
+    {
+        public string InternalName { get; set; } = String.Empty;
+
+        public string ExternalName { get; set; } = String.Empty;
+
+        public int MinValue { get; set; } = 0;
+
+        public int MaxValue { get; set; } = Int32.MaxValue;
+
+        public string SelectedColumnTypeId { get; set; } = "I";     // dEFAULT
+    }
+
+    private List<ColumnType> ColumnTypes = new();
+    private List<ColumnConfig> ColumnConfigs = new();
+
+    // protected override async Task OnParametersSetAsync()
+    // {     
+    //     await base.OnParametersSetAsync();
+    // }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Set defaults
+        PredictionTrainConfig = new PredictionTrainConfig()
+        {
+            DataSetInfoId = Id,
+            TrainingEpochs = 1000,
+            LearningRate = 0.001f,
+            NormaliseValues = true,
+            MaxTrainRows = Int32.MaxValue,
+            //ModelFolder = 
+        };
+
+        ColumnTypes = new List<ColumnType>()
+        {
+            new ColumnType()
+            {
+                Id = "I",
+                Name = "Ignore"
+            },
+            new ColumnType()
+            {
+                Id = "F",
+                Name = "Feature"
+            },
+              new ColumnType()
+            {
+                Id = "L",
+                Name = "Label"
+            },
+        };
+
+        // Get data set
+        DataSetInfo = DataSetInfoService.GetById(Id);
+
+        if (DataSetInfo is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+
+        ColumnConfigs = DataSetInfo.Columns.Select(column => new ColumnConfig()
+        {
+            ExternalName = column.ExternalName,
+            InternalName = column.InternalName,
+            MinValue = 0,
+            MaxValue = Int32.MaxValue,
+            SelectedColumnTypeId = "I"      // Default to ignore
+        }).ToList();
+    }
+
+    private async Task RunTrain()
+    {
+        PredictionTrainConfig.ModelFolder = Path.Combine(ConfigUtilities.PredictionModelsLocalFolder, PredictionTrainConfig.ModelName);
+        PredictionTrainConfig.ColumnConfigs = ColumnConfigs.Select(config =>
+        {
+            return new DataSetColumnConfig()
+            {
+                ExternalName = config.ExternalName,
+                InternalName = config.InternalName,
+                IsFeature = config.SelectedColumnTypeId == "F",
+                IsLabel = config.SelectedColumnTypeId == "L",
+                MinValue = config.MinValue,
+                MaxValue = config.MaxValue
+            };
+        }).ToList();
+
+        // Check parameters
+        if (!PredictionTrainConfig.ColumnConfigs.Any(c => c.IsFeature))
+        {
+            throw new ArgumentException("No features selected");
+        }
+        if (!PredictionTrainConfig.ColumnConfigs.Any(c => c.IsLabel))
+        {
+            throw new ArgumentException("No labels selected");
+        }
+
+        var systemTaskRequest = new SystemTaskRequest(DateTimeOffset.UtcNow,
+                                        new Dictionary<string, object>()
+                                        {
+                                           { "PredictionTrainConfig", PredictionTrainConfig } 
+                                        },
+                                        SystemTaskTypeNames.RunPredictionTrain);
+        SystemTaskList.AddRequest(systemTaskRequest);             
+
+        NavigationManager.NavigateTo("/datasetinfos");
+    }
+}

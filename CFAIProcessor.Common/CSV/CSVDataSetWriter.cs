@@ -15,18 +15,25 @@ namespace CFAIProcessor.CSV
     {
         private readonly string _file;
         private readonly Char _delimiter;
+        private readonly Encoding _encoding;
 
-        public CSVDataSetWriter(string file, Char delimiter)
+        public CSVDataSetWriter(string file, Char delimiter, Encoding encoding)
         {
             _file = file;
             _delimiter = delimiter;
+            _encoding = encoding;
         }
    
         public void WriteRow(Dictionary<string, string> row)
         {
             var isWriteFileHeaders = !File.Exists(_file);
 
-            var csvWriter = new CSVDictionaryWriter();
+            var csvWriter = new CSVDictionaryWriter()
+            {
+                File = _file,
+                Delimiter = _delimiter,
+                Encoding = _encoding
+            };
             var rowNew = new Dictionary<string, object>();
             foreach (var column in row.Keys)
             {

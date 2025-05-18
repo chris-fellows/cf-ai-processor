@@ -76,7 +76,7 @@ namespace CFAIProcessor.Prediction
 
             // Create prediction output           
             //var predictionOutputFile = new CSVPredictionOutputFile(configParams.PredictionOutputDataFile, configParams.TrainConfig);
-            var predictionOutputFile = new CSVDataSetWriter(configParams.PredictionOutputDataFile, (Char)9);
+            var predictionOutputFile = new CSVDataSetWriter(configParams.PredictionOutputDataFile, (Char)9, System.Text.Encoding.UTF8);
 
             var predictionV3 = new PredictionProcessorV3();
             predictionV3.TrainAndPredict(configParams.PredictionConfig, trainDataSource, testDataSource, predictionOutputFile, cancellationToken);

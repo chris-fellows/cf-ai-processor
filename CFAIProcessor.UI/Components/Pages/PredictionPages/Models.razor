@@ -1,0 +1,58 @@
+﻿@page "/predictions/models"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using CFAIProcessor.Interfaces
+@using CFAIProcessor.Models
+
+@inject IDataSetInfoService DataSetInfoService
+@inject IPredictionModelService PredictionModelService
+
+@attribute [Authorize(Roles = "Administrator,User")]
+
+<h3>Index</h3>
+
+<p>
+    <a href="datasetinfos/create">Add New</a>
+
+    <br />
+    <div style="display: inline-block">
+    </div>
+</p>
+
+@if (PredictionModelsQueryable == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <QuickGrid Class="table" Items="@PredictionModelsQueryable">
+        <PropertyColumn Property="predictionModel => predictionModel.Name" />
+
+        <TemplateColumn Context="predictionModel">
+            <a href="@($"prediction/train?id={predictionModel.Id}")">Train</a>
+        </TemplateColumn>
+    </QuickGrid>
+}
+
+@code {
+    private IQueryable<PredictionModel> PredictionModelsQueryable;
+
+    private bool IsBusy { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsBusy = true;
+
+        await RefreshPredictionModelsAsync();
+    }
+
+    private async Task RefreshPredictionModelsAsync()
+    {
+        IsBusy = true;
+
+        PredictionModelsQueryable = PredictionModelService.GetAll()
+                        .OrderBy(dsi => dsi.Name)
+                        .AsQueryable();
+
+        IsBusy = false;
+    }
+}

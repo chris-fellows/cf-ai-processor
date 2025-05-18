@@ -7,7 +7,9 @@ using System.Threading.Tasks;
 namespace CFAIProcessor.Constants
 {
     public static class SystemTaskTypeNames
-    {
+    {       
         public const string RunPrediction = "Run Prediction";
+
+        public const string RunPredictionTrain = "Run Prediction Train";
     }
 }

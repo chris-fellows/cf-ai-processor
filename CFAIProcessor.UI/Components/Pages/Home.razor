@@ -2,6 +2,22 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
+<div class="row">
+    <div class="col-12">
+        <h3 class="fw-bolder">Welcome to CF AI Processor</h3>
+    </div>
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <AuthorizeView>
+                    <NotAuthorized>
+                        <span>You are not logged in. Please <a class="fw-bolder" href="/login">click here</a> to login.</span>
+                    </NotAuthorized>
+                    <Authorized>
+                        <span>Logged in. <a class="fw-bolder" href="/logout">Click here</a> to logout.</span>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </div>
+    </div>
+</div>

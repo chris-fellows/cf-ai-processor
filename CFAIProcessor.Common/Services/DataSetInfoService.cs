@@ -26,7 +26,7 @@ namespace CFAIProcessor.Services
                 // Add dataset info
                 var dataSetInfo = new DataSetInfo()
                 {
-                    Id = file,
+                    Id = Path.GetFileName(file),
                     Name = Path.GetFileNameWithoutExtension(file),
                     Columns = csvConfig.Columns.Select(column =>
                     {
@@ -43,6 +43,42 @@ namespace CFAIProcessor.Services
             }
 
             return list.OrderBy(ds => ds.Name).ToList();            
+        }
+
+        public DataSetInfo? GetById(string id)
+        {
+            var file = Path.Combine(_folder, id);
+            if (File.Exists(file))
+            {
+                // Load CSV config file
+                var configFile = Path.Combine(Path.GetDirectoryName(file), $"{Path.GetFileNameWithoutExtension(file)}.json");
+                var csvConfig = JsonUtilities.DeserializeFromString<CSVConfig>(File.ReadAllText(configFile), JsonUtilities.DefaultJsonSerializerOptions);
+
+                // Add dataset info
+                var dataSetInfo = new DataSetInfo()
+                {
+                    Id = Path.GetFileName(file),
+                    Name = Path.GetFileNameWithoutExtension(file),
+                    Columns = csvConfig.Columns.Select(column =>
+                    {
+                        return new DataSetColumn()
+                        {
+                            InternalName = column.InternalName,
+                            ExternalName = column.ExternalName
+                        };
+                    }).ToList(),
+                    DataSource = file,
+                };
+
+                return dataSetInfo;
+            }
+
+            return null;
+        }
+
+        public void Add(DataSetInfo dataSetInfo, string tempFile)
+        {
+            File.Move(tempFile, dataSetInfo.DataSource);
         }
     }
 }

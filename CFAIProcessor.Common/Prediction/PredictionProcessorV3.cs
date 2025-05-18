@@ -22,6 +22,85 @@ namespace CFAIProcessor.Prediction
     /// </summary>
     internal class PredictionProcessorV3
     {
+        public PredictionModel Train(PredictionTrainConfig predictionTrainConfig,
+                          IPredictionDataSource trainDataSource,
+                          IPredictionDataSource validDataSource,
+                          CancellationToken cancellationToken)
+        {
+            var predictionModel = new PredictionModel()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = predictionTrainConfig.ModelName,
+                DataSetInfoId = predictionTrainConfig.DataSetInfoId,
+                ModelFolder = predictionTrainConfig.ModelFolder,
+                TrainConfig = predictionTrainConfig
+            };
+
+            var model = GetInitialModel();
+
+            // Get training data
+            var trainX = trainDataSource.GetFeatureValues(predictionTrainConfig.NormaliseValues, predictionTrainConfig.MaxTrainRows);
+            var trainY = trainDataSource.GetLabelValues(predictionTrainConfig.NormaliseValues, predictionTrainConfig.MaxTrainRows);
+
+            // Get validation data
+            var validX = validDataSource.GetFeatureValues(predictionTrainConfig.NormaliseValues, predictionTrainConfig.MaxTrainRows);
+            var validY = validDataSource.GetLabelValues(predictionTrainConfig.NormaliseValues, predictionTrainConfig.MaxTrainRows);
+
+            // Compile
+            model.compile(optimizer: new Tensorflow.Keras.Optimizers.Adam(predictionTrainConfig.LearningRate),
+                            loss: new Tensorflow.Keras.Losses.MeanSquaredError(),
+                            metrics: new[] { "accuracy" });
+
+            var weightsOriginal = model.get_weights();
+
+            // Train model            
+            model.fit(trainX, trainY,
+                    validation_data: (validX, validY),
+                    batch_size: 100, epochs: predictionTrainConfig.TrainingEpochs);
+
+            var metrics = model.metrics.ToList();
+
+            var weightsNew = model.get_weights();
+
+            // Save model
+            if (!String.IsNullOrEmpty(predictionTrainConfig.ModelFolder))
+            {
+                Directory.CreateDirectory(predictionTrainConfig.ModelFolder);
+                model.save(predictionTrainConfig.ModelFolder);
+            }
+
+            return predictionModel;
+        }
+
+        private Sequential GetInitialModel()
+        {
+            // https://scisharp.github.io/Keras.NET/
+            var model = new Sequential(new Tensorflow.Keras.ArgsDefinition.SequentialArgs()
+            {
+                Layers = new List<Tensorflow.Keras.ILayer>()
+                {
+                    new Tensorflow.Keras.Layers.Dense(new Tensorflow.Keras.ArgsDefinition.DenseArgs()
+                    {
+                        Units = 64,
+                        //InputShape = (1,2),
+                        InputShape = (2),
+                        //Activation = new Tensorflow.Keras.Activations().Tanh,
+                        Activation = new Tensorflow.Keras.Activations().Relu,
+                        Trainable = true     // Added
+                    }),
+                    new Tensorflow.Keras.Layers.Dense(new Tensorflow.Keras.ArgsDefinition.DenseArgs()
+                    {
+                        Units = 1,
+                        //Activation = new Tensorflow.Keras.Activations().Tanh,
+                        //Activation = new Tensorflow.Keras.Activations().Relu,
+                        //Trainable = true     // Added
+                    })
+                }
+            });
+
+            return model;
+        }
+
         /// <summary>
         /// Trains model on training data and then predicts using the test data.
         /// </summary>
@@ -37,6 +116,9 @@ namespace CFAIProcessor.Prediction
                         //IPredictionOutputFile predictionOutputFile,
                         CancellationToken cancellationToken)
         {
+            var model = GetInitialModel();
+
+            /*
             // https://scisharp.github.io/Keras.NET/
             var model = new Sequential(new Tensorflow.Keras.ArgsDefinition.SequentialArgs()
             {
@@ -57,6 +139,7 @@ namespace CFAIProcessor.Prediction
                     })
                 }
             });
+            */
 
             // Get training data
             var trainX = trainDataSource.GetFeatureValues(predictionConfig.NormaliseValues, predictionConfig.MaxTrainRows);
@@ -70,7 +153,7 @@ namespace CFAIProcessor.Prediction
             var weightsOriginal = model.get_weights();            
             
             // Train model            
-            model.fit(trainX, trainY, batch_size: 100, epochs: predictionConfig.TrainingEpochs);
+            model.fit(trainX, trainY,  batch_size: 100, epochs: predictionConfig.TrainingEpochs);            
 
             var metrics = model.metrics.ToList();
 
@@ -79,6 +162,7 @@ namespace CFAIProcessor.Prediction
             // Save model
             if (!String.IsNullOrEmpty(predictionConfig.ModelFolder))
             {
+                Directory.CreateDirectory(predictionConfig.ModelFolder);
                 model.save(predictionConfig.ModelFolder);
             }
 

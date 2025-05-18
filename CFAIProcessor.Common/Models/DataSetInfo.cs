@@ -1,5 +1,8 @@
 ﻿namespace CFAIProcessor.Models
 {
+    /// <summary>
+    /// Details of a data set
+    /// </summary>
     public class DataSetInfo
     {
         public string Id { get; set; } = String.Empty;
@@ -11,6 +14,9 @@
         /// </summary>
         public string DataSource { get; set; } = String.Empty;
 
+        /// <summary>
+        /// Data set columns
+        /// </summary>
         public List<DataSetColumn> Columns { get; set; } = new();
     }
 }

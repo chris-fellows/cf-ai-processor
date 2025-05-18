@@ -1,0 +1,58 @@
+﻿@page "/datasetinfos"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using CFAIProcessor.Interfaces
+@using CFAIProcessor.Models
+
+@inject IDataSetInfoService DataSetInfoService
+
+@attribute [Authorize(Roles = "Administrator,User")]
+
+<h3>Index</h3>
+
+<p>
+    <a href="datasetinfos/create">Add New</a>    
+
+    <br/>
+    <div style="display: inline-block">
+      
+    </div>
+</p>
+
+@if (DataSetInfosQueryable == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <QuickGrid Class="table" Items="@DataSetInfosQueryable">
+        <PropertyColumn Property="dataSetInfo => dataSetInfo.Name" />
+
+        <TemplateColumn Context="dataSetInfo">            
+            <a href="@($"predictions/train?id={dataSetInfo.Id}")">Train</a>
+        </TemplateColumn>
+    </QuickGrid>
+}
+
+@code {
+    private IQueryable<DataSetInfo> DataSetInfosQueryable;
+
+    private bool IsBusy { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsBusy = true;
+
+        await RefreshDataSetInfosAsync();
+    }
+
+    private async Task RefreshDataSetInfosAsync()
+    {
+        IsBusy = true;
+
+        DataSetInfosQueryable = DataSetInfoService.GetAll()
+                        .OrderBy(dsi => dsi.Name)
+                        .AsQueryable();
+
+        IsBusy = false;
+    }
+}
