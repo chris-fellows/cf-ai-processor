@@ -100,9 +100,14 @@ builder.Services.AddSingleton<ISystemTaskList>((scope) =>
     {
         new SystemTaskConfig()
         {
+            SystemTaskName = SystemTaskTypeNames.RunPredictionPredict,
+            ExecuteFrequency = TimeSpan.Zero        // Only runs on demand
+        },
+        new SystemTaskConfig()
+        {
             SystemTaskName = SystemTaskTypeNames.RunPredictionTrain,
             ExecuteFrequency = TimeSpan.Zero        // Only runs on demand
-        }
+        }     
 
         //new SystemTaskConfig()
         //{

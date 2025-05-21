@@ -1,4 +1,4 @@
-﻿@page "/predictions/train"
+﻿@page "/predictions/predict"
 
 @using CFAIProcessor.Constants
 @using CFAIProcessor.Interfaces
@@ -8,6 +8,7 @@
 
 @inject NavigationManager NavigationManager
 @inject IDataSetInfoService DataSetInfoService
+@inject IPredictionModelService PredictionModelService
 @inject ISystemTaskList SystemTaskList
 @inject IRequestContextService RequestContextService
 
@@ -15,9 +16,7 @@
 @attribute [StreamRendering]
 @attribute [Authorize(Roles = "Administrator,User")]
 
-<h3>Train</h3>
-
-<hr />
+<h3>Predict</h3>
 @if (DataSetInfo is null)
 {
     <p><em>Loading...</em></p>
@@ -26,33 +25,33 @@ else
 {
     <div class="row">
         <div class="col-md-4">
-            <EditForm method="post" Model="PredictionTrainConfig" OnValidSubmit="RunTrain" FormName="edit" Enhance>
+            <EditForm method="post" Model="PredictionPredictConfig" OnValidSubmit="RunPredict" FormName="edit" Enhance>
                 <DataAnnotationsValidator />
-                <ValidationSummary role="alert"/>                
-
-                <div class="mb-3">
-                    <label for="name" class="form-label">Model name:</label> 
-                    <InputText id="name" @bind-Value="PredictionTrainConfig.ModelName" class="form-control" /> 
-                    <ValidationMessage For="() => PredictionTrainConfig.ModelName" class="text-danger" /> 
-                </div>        
-
-                <div class="mb-3">
-                    <label for="TrainingEpochs" class="form-label">Epochs:</label>
-                    <InputNumber id="TrainingEpochs"  @bind-Value="PredictionTrainConfig.TrainingEpochs" min="0" max="Int32.MaxValue" type="range"/>
-                    <ValidationMessage For="() => PredictionTrainConfig.TrainingEpochs" class="text-danger" />
-                </div>
+                <ValidationSummary role="alert"/>    
+                
+                
+                    <div class="mb-3">
+                        <label for="SelectedPredictionModelId" class="form-label">Model:</label>
+                        <InputSelect id="SelectedPredictionModelId" @bind-Value="SelectedPredictionModelId" class="form-control">
+                            @foreach (PredictionModel predictionModel in PredictionModels)
+                            {
+                                @if (predictionModel.Id == SelectedPredictionModelId)
+                                {
+                                    <option selected value="@predictionModel.Id">@predictionModel.Name</option>
+                                }
+                                else
+                                {
+                                    <option value="@predictionModel.Id">@predictionModel.Name</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>              
 
                 <div class="mb-3">
                     <label for="NormaliseValues" class="form-label">Normalise values:</label>
-                    <InputCheckbox id="NormaliseValues" @bind-Value="PredictionTrainConfig.NormaliseValues" class="form-check-input" />
-                    <ValidationMessage For="() => PredictionTrainConfig.NormaliseValues" class="text-danger" />
-                </div>
-                
-                <div class="mb-3">
-                    <label for="LearningRate" class="form-label">Learning rate:</label>
-                    <InputNumber id="LearningRate"  @bind-Value="PredictionTrainConfig.LearningRate" min="0" max="Int32.MaxValue" step="0.001" type="range"/>                    
-                    <ValidationMessage For="() => PredictionTrainConfig.LearningRate" class="text-danger" />
-                </div>
+                    <InputCheckbox id="NormaliseValues" @bind-Value="PredictionPredictConfig.NormaliseValues" class="form-check-input" />
+                    <ValidationMessage For="() => PredictionPredictConfig.NormaliseValues" class="text-danger" />
+                </div>                
 
                 @foreach(var columnConfig in ColumnConfigs)
                 {
@@ -88,7 +87,7 @@ else
                     </div>
                 }
 
-                <button type="submit" class="btn btn-primary">Train</button>
+                <button type="submit" class="btn btn-primary">Predict</button>
             </EditForm>            
         </div>
     </div>
@@ -101,11 +100,15 @@ else
 
 @code {
     [SupplyParameterFromQuery]
-    private string Id { get; set; }     // DataSetInfo.Id
+    private string Id { get; set; }    // DataSetInfo.Id
 
     private DataSetInfo DataSetInfo { get; set; }
 
-    private PredictionTrainConfig PredictionTrainConfig { get; set; } = new();
+    public PredictionPredictConfig PredictionPredictConfig { get; set; } = new();    
+
+    private List<PredictionModel> PredictionModels { get; set; } = new();
+
+    private string SelectedPredictionModelId { get; set; } = String.Empty;
 
     private class ColumnType
     {
@@ -130,21 +133,19 @@ else
     private List<ColumnType> ColumnTypes = new();
     private List<ColumnConfig> ColumnConfigs = new();
 
-    // protected override async Task OnParametersSetAsync()
-    // {     
-    //     await base.OnParametersSetAsync();
-    // }
-
     protected override async Task OnInitializedAsync()
     {
+        PredictionModels = PredictionModelService.GetAll();
+        SelectedPredictionModelId = PredictionModels[0].Id;
+
         // Set defaults
-        PredictionTrainConfig = new PredictionTrainConfig()
+        PredictionPredictConfig = new PredictionPredictConfig()
         {
-            DataSetInfoId = Id,
-            TrainingEpochs = 1000,
-            LearningRate = 0.001f,
+            //DataSetInfoId = Id,
+            //TrainingEpochs = 1000,
+            //LearningRate = 0.001f,
             NormaliseValues = true,
-            MaxTrainRows = Int32.MaxValue,
+            MaxTestRows = Int32.MaxValue,
             UserId = RequestContextService.UserId
             //ModelFolder = 
         };
@@ -186,10 +187,14 @@ else
         }).ToList();
     }
 
-    private async Task RunTrain()
+    private async Task RunPredict()
     {
-        PredictionTrainConfig.ModelFolder = Path.Combine(ConfigUtilities.PredictionModelsLocalFolder, PredictionTrainConfig.ModelName);
-        PredictionTrainConfig.ColumnConfigs = ColumnConfigs.Select(config =>
+        var predictionModel = PredictionModels.First(m => m.Id == SelectedPredictionModelId);
+
+        PredictionPredictConfig.DataSetInfoId = DataSetInfo.Id;
+        PredictionPredictConfig.ModelFolder = Path.Combine(ConfigUtilities.PredictionModelsLocalFolder, predictionModel.Name);
+        PredictionPredictConfig.DataSetInfoDataSource = Path.Combine(ConfigUtilities.DataSetLocalFolder, $"{predictionModel.Name}-Predict.txt");
+        PredictionPredictConfig.ColumnConfigs = ColumnConfigs.Select(config =>
         {
             return new DataSetColumnConfig()
             {
@@ -203,11 +208,11 @@ else
         }).ToList();
 
         // Check parameters
-        if (!PredictionTrainConfig.ColumnConfigs.Any(c => c.IsFeature))
+        if (!PredictionPredictConfig.ColumnConfigs.Any(c => c.IsFeature))
         {
             throw new ArgumentException("No features selected");
         }
-        if (!PredictionTrainConfig.ColumnConfigs.Any(c => c.IsLabel))
+        if (!PredictionPredictConfig.ColumnConfigs.Any(c => c.IsLabel))
         {
             throw new ArgumentException("No labels selected");
         }
@@ -215,9 +220,9 @@ else
         var systemTaskRequest = new SystemTaskRequest(DateTimeOffset.UtcNow,
                                         new Dictionary<string, object>()
                                         {
-                                           { "PredictionTrainConfig", PredictionTrainConfig } 
+                                           { "PredictionPredictConfig", PredictionPredictConfig } 
                                         },
-                                        SystemTaskTypeNames.RunPredictionTrain);
+                                        SystemTaskTypeNames.RunPredictionPredict);
         SystemTaskList.AddRequest(systemTaskRequest);             
 
         NavigationManager.NavigateTo("/datasetinfos");

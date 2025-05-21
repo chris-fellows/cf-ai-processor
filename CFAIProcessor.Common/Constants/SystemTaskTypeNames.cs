@@ -10,6 +10,8 @@ namespace CFAIProcessor.Constants
     {       
         public const string RunPrediction = "Run Prediction";
 
+        public const string RunPredictionPredict = "Run Prediction Predict";
+
         public const string RunPredictionTrain = "Run Prediction Train";
     }
 }

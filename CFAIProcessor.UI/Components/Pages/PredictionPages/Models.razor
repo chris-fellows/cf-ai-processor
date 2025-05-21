@@ -29,6 +29,7 @@ else
         <PropertyColumn Property="predictionModel => predictionModel.Name" />
 
         <TemplateColumn Context="predictionModel">
+            <a href="@($"prediction/predict?id={predictionModel.Id}")">Predict</a>
             <a href="@($"prediction/train?id={predictionModel.Id}")">Train</a>
         </TemplateColumn>
     </QuickGrid>

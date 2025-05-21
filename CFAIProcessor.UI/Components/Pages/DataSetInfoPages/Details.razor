@@ -1,0 +1,86 @@
+﻿@page "/datasetinfos/details"
+
+@using CFAIProcessor.Interfaces
+@using CFAIProcessor.Models
+@using CFAIProcessor.UI.Utilities
+@inject NavigationManager NavigationManager
+@inject IDataSetInfoService DataSetInfoService
+
+@attribute [Authorize(Roles = "Administrator,User")]
+
+@using System.IO
+@inject IJSRuntime JS
+
+<script>
+    window.downloadFileFromStream = async (fileName, contentStreamReference) =>
+    {
+        const arrayBuffer = await contentStreamReference.arrayBuffer();
+        const blob = new Blob([arrayBuffer]);
+        const url = URL.createObjectURL(blob);
+        const anchorElement = document.createElement('a');
+        anchorElement.href = url;
+        anchorElement.download = fileName ?? '';
+        anchorElement.click();
+        anchorElement.remove();
+        URL.revokeObjectURL(url);
+    }
+</script>
+
+<h3>Details</h3>
+
+<ActivityIndicator IsBusy="@IsBusy" />
+
+<div>    
+    <button @onclick="DownloadCSVAsync" class="btn btn-primary">Download</button>
+    <hr />
+    @if (DataSetInfo is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <dl class="row">
+            <dt class="col-sm-2">Name</dt>
+            <dd class="col-sm-10">@DataSetInfo.Name</dd>            
+        </dl>
+        <div>
+            <a href="@($"/datasetinfos")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private string Id { get; set; }
+
+    private DataSetInfo? DataSetInfo { get; set; }
+
+    private bool IsBusy { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        DataSetInfo = DataSetInfoService.GetById(Id);
+
+        if (DataSetInfo is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task DownloadCSVAsync()
+    {
+        //using (var session = new DisposableActionsSession())
+        //{
+        IsBusy = true;
+        //session.AddAction(() => IsBusy = false);
+
+        var fileStream = File.OpenRead(DataSetInfo.DataSource);
+
+        using var streamRef = new DotNetStreamReference(stream: fileStream);
+
+        await JS.InvokeVoidAsync("downloadFileFromStream", Path.GetFileName(DataSetInfo.DataSource), streamRef);
+
+        IsBusy = false;
+        //}
+    }
+}

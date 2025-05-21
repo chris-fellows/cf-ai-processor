@@ -5,9 +5,27 @@
 
 @inject IDataSetInfoService DataSetInfoService
 
+@using System.IO
+@inject IJSRuntime JS
+
 @attribute [Authorize(Roles = "Administrator,User")]
 
 <h3>Index</h3>
+
+<script>
+    window.downloadFileFromStream = async (fileName, contentStreamReference) =>
+    {
+        const arrayBuffer = await contentStreamReference.arrayBuffer();
+        const blob = new Blob([arrayBuffer]);
+        const url = URL.createObjectURL(blob);
+        const anchorElement = document.createElement('a');
+        anchorElement.href = url;
+        anchorElement.download = fileName ?? '';
+        anchorElement.click();
+        anchorElement.remove();
+        URL.revokeObjectURL(url);
+    }
+</script>
 
 <p>
     <a href="datasetinfos/create">Add New</a>    
@@ -27,8 +45,10 @@ else
     <QuickGrid Class="table" Items="@DataSetInfosQueryable">
         <PropertyColumn Property="dataSetInfo => dataSetInfo.Name" />
 
-        <TemplateColumn Context="dataSetInfo">            
-            <a href="@($"predictions/train?id={dataSetInfo.Id}")">Train</a>
+        <TemplateColumn Context="dataSetInfo">
+            <a href="@($"datasetinfos/details?id={dataSetInfo.Id}")">Details</a>
+            <a href="@($"predictions/predict?id={dataSetInfo.Id}")">Predict</a>
+            <a href="@($"predictions/train?id={dataSetInfo.Id}")">Train</a>            
         </TemplateColumn>
     </QuickGrid>
 }
@@ -54,5 +74,5 @@ else
                         .AsQueryable();
 
         IsBusy = false;
-    }
+    }  
 }

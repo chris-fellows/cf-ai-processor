@@ -91,11 +91,7 @@ else
         <TemplateColumn Title="Created User" Context="auditevent">
             <ImageAndText ImageSource="@(GetCreatedUserImageSource(auditevent))" Text="@(GetCreatedUserName(auditevent))" />
         </TemplateColumn>
-
-        <TemplateColumn Title="Issue" Context="auditevent">
-            <a href="@($"issues/details?id={GetIssueId(auditevent)}")">@($"{GetIssueReference(auditevent)}")</a>
-        </TemplateColumn>    
-
+     
         <TemplateColumn Title="User" Context="auditevent">
             <ImageAndText ImageSource="@(GetUserImageSource(auditevent))" Text="@(GetUserName(auditevent))" />
         </TemplateColumn>

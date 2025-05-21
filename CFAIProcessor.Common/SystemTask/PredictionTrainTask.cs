@@ -13,7 +13,10 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CFAIProcessor.SystemTask
 {
-    public class PredictTrainTask : ISystemTask
+    /// <summary>
+    /// Runs prediction training
+    /// </summary>
+    public class PredictionTrainTask : ISystemTask
     {
         public string Name => SystemTaskTypeNames.RunPredictionTrain;
 

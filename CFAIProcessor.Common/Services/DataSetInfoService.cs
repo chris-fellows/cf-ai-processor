@@ -78,7 +78,10 @@ namespace CFAIProcessor.Services
 
         public void Add(DataSetInfo dataSetInfo, string tempFile)
         {
-            File.Move(tempFile, dataSetInfo.DataSource);
+            if (!String.IsNullOrEmpty(tempFile))
+            {
+                File.Move(tempFile, dataSetInfo.DataSource);
+            }
         }
     }
 }

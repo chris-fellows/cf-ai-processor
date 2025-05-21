@@ -1,4 +1,6 @@
-﻿namespace CFAIProcessor.UI.Utilities
+﻿using Tensorflow.Checkpoint;
+
+namespace CFAIProcessor.UI.Utilities
 {
     public class ConfigUtilities
     {
@@ -9,7 +11,9 @@
         /// <summary>
         /// Items per page on list pages (Audit Events, Issues etc0
         /// </summary>
-        public static int ItemsPerListPage = 20;        
+        public static int ItemsPerListPage = 20;
+
+        public static string ImageTempFilesRootFolder => Path.Combine(Path.GetTempPath(), "Images-Temp");
         public static string AuditEventTypeImageLocalFolder => "D:\\Data\\Dev\\C#\\cfai-processor\\CFAIProcessor.UI\\wwwroot\\images\\audit_event_types";
 
         public static string DataSetLocalFolder = "D:\\Data\\Dev\\C#\\cf-ai-processor-local\\Data Sets";
