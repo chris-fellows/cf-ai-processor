@@ -8,28 +8,12 @@ namespace CFAIProcessor.Models
 {
     public class ImageClassifyConfig
     {
-        public string AllImageFolder { get; set; } = String.Empty;
+        public string TestImageSetInfoId { get; set; } = String.Empty;
 
-        /// <summary>
-        /// Folder containing images to train model
-        /// </summary>
-        public string TrainImageFolder { get; set; } = String.Empty;
+        public string TestImageSetInfoDataSource { get; set; } = String.Empty;
 
-        /// <summary>
-        /// Folder containing images to test model
-        /// </summary>
-        public string TestImageFolder { get; set; } = String.Empty;
+        public string ModelFolder { get; set; } = String.Empty;
 
-        public string ValidImageFolder { get; set; } = String.Empty;
-
-        public int TrainImageCount { get; set; }
-
-        public int ValidImageCount { get; set; }
-
-        public int TestImageCount { get; set; }        
-
-        public int TrainEpochs { get; set; } = 10;
-
-        public List<string> ClassNames { get; set; } = new();
+        public string UserId { get; set; } = String.Empty;
     }
 }

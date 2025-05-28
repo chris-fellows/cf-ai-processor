@@ -1,0 +1,60 @@
+﻿@page "/imageclassify/models"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using CFAIProcessor.Interfaces
+@using CFAIProcessor.Models
+
+@inject IDataSetInfoService DataSetInfoService
+@inject IImageClassifyModelService ImageClassifyModelService
+@inject IUserService UserService
+
+@attribute [Authorize(Roles = "Administrator,User")]
+
+<h3>Index</h3>
+
+<p>
+    <a href="datasetinfos/create">Add New</a>
+
+    <br />
+    <div style="display: inline-block">
+    </div>
+</p>
+
+@if (ImageClassifyModelsQueryable == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <QuickGrid Class="table" Items="@ImageClassifyModelsQueryable">
+        <PropertyColumn Property="predictionModel => predictionModel.Name" />
+
+        <TemplateColumn Context="predictionModel">
+            <a href="@($"imageclassify/classify?id={predictionModel.Id}")">Classify</a>
+            <a href="@($"imageclassify/train?id={predictionModel.Id}")">Train</a>
+        </TemplateColumn>
+    </QuickGrid>
+}
+
+@code {
+    private IQueryable<ImageClassifyModel> ImageClassifyModelsQueryable;
+
+    private bool IsBusy { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsBusy = true;
+
+        await RefreshImageClassifyModelsAsync();
+    }
+
+    private async Task RefreshImageClassifyModelsAsync()
+    {
+        IsBusy = true;
+
+        ImageClassifyModelsQueryable = ImageClassifyModelService.GetAll()
+                        .OrderBy(dsi => dsi.Name)
+                        .AsQueryable();
+
+        IsBusy = false;
+    }
+}

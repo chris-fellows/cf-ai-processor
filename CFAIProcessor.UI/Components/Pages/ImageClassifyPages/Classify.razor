@@ -1,0 +1,111 @@
+﻿@page "/imageclassify/classify"
+
+@using CFAIProcessor.Constants
+@using CFAIProcessor.Interfaces
+@using CFAIProcessor.Models
+@using CFAIProcessor.SystemTask
+@using CFAIProcessor.UI.Utilities
+
+@inject NavigationManager NavigationManager
+@inject IImageClassifyModelService ImageClassifyModelService
+@inject IImageSetInfoService ImageSetInfoService
+@inject ISystemTaskList SystemTaskList
+@inject IRequestContextService RequestContextService
+
+@rendermode InteractiveServer
+@attribute [StreamRendering]
+@attribute [Authorize(Roles = "Administrator,User")]
+
+<h3>Predict</h3>
+@if (ImageSetInfo is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="ImageClassifyConfig" OnValidSubmit="RunClassify" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>    
+                                
+                    <div class="mb-3">
+                        <label for="SelectedImageClassifyModelId" class="form-label">Model:</label>
+                        <InputSelect id="SelectedImageClassifyModelId" @bind-Value="SelectedImageClassifyModelId" class="form-control">
+                            @foreach (ImageClassifyModel imageClassifyModel in ImageClassifyModels)
+                            {
+                                @if (imageClassifyModel.Id == SelectedImageClassifyModelId)
+                                {
+                                    <option selected value="@imageClassifyModel.Id">@imageClassifyModel.Name</option>
+                                }
+                                else
+                                {
+                                    <option value="@imageClassifyModel.Id">@imageClassifyModel.Name</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>              
+                             
+                <button type="submit" class="btn btn-primary">Predict</button>
+            </EditForm>            
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/imageclassify/models">Back to List</a>
+</div>
+
+
+@code {
+    [SupplyParameterFromQuery]
+    private string Id { get; set; }    // ImageSetInfo.Id
+
+    private ImageSetInfo ImageSetInfo { get; set; }
+
+    public ImageClassifyConfig ImageClassifyConfig { get; set; } = new();    
+
+    private List<ImageClassifyModel> ImageClassifyModels { get; set; } = new();
+
+    private string SelectedImageClassifyModelId { get; set; } = String.Empty;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        ImageClassifyModels = ImageClassifyModelService.GetAll();
+        SelectedImageClassifyModelId = ImageClassifyModels[0].Id;
+
+        // Set defaults
+        ImageClassifyConfig = new ImageClassifyConfig()
+        {
+            TestImageSetInfoId = Id,                        
+            UserId = RequestContextService.UserId            
+        };      
+
+        // Get data set
+        ImageSetInfo = ImageSetInfoService.GetById(Id);
+
+        if (ImageSetInfo is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }    
+    }
+
+    private async Task RunClassify()
+    {
+        var imageClassifyModel = ImageClassifyModels.First(m => m.Id == SelectedImageClassifyModelId);
+
+        ImageClassifyConfig.TestImageSetInfoId = ImageSetInfo.Id;
+        ImageClassifyConfig.ModelFolder = Path.Combine(ConfigUtilities.ImageClassifyModelsLocalFolder, imageClassifyModel.Name);
+        ImageClassifyConfig.TestImageSetInfoDataSource = Path.Combine(ConfigUtilities.ImageSetLocalFolder, $"{imageClassifyModel.Name}-Classify.txt");
+       
+        var systemTaskRequest = new SystemTaskRequest(DateTimeOffset.UtcNow,
+                                        new Dictionary<string, object>()
+                                        {
+                                           { "ImageClassifyConfig", ImageClassifyConfig } 
+                                        },
+                                        SystemTaskTypeNames.RunImageClassify);
+        SystemTaskList.AddRequest(systemTaskRequest);             
+
+        NavigationManager.NavigateTo("/imagesetinfos");
+    }
+}

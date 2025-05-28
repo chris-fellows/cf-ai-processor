@@ -54,6 +54,10 @@ builder.Services.AddScoped<IChartTypeService>((scope) =>
 {
     return new XmlChartTypeService(Path.Combine(configFolder, "ChartType"));
 });
+builder.Services.AddScoped<IImageClassifyModelService>((scope) =>
+{
+    return new XmlImageClassifyModelService(Path.Combine(configFolder, "ImageClassifyModel"));
+});
 builder.Services.AddScoped<IPredictionModelService>((scope) =>
 {
     return new XmlPredictionModelService(Path.Combine(configFolder, "PredictionModel"));
@@ -70,6 +74,10 @@ builder.Services.AddScoped<IUserService>((scope) =>
 builder.Services.AddScoped<IDataSetInfoService>((scope) =>
 {
     return new DataSetInfoService(ConfigUtilities.DataSetLocalFolder);  // TODO: Remove this    
+});
+builder.Services.AddScoped<IImageSetInfoService>((scope) =>
+{
+    return new ImageSetInfoService(ConfigUtilities.ImageSetLocalFolder);  // TODO: Remove this    
 });
 
 // Add toast service
@@ -98,6 +106,19 @@ builder.Services.AddSingleton<ISystemTaskList>((scope) =>
     // Set system task configs
     var systemTaskConfigs = new List<SystemTaskConfig>()
     {
+        // Image train & classify
+        new SystemTaskConfig()
+        {
+            SystemTaskName = SystemTaskTypeNames.RunImageTrain,
+            ExecuteFrequency = TimeSpan.Zero        // Only runs on demand
+        },
+        new SystemTaskConfig()
+        {
+            SystemTaskName = SystemTaskTypeNames.RunImageClassify,
+            ExecuteFrequency = TimeSpan.Zero        // Only runs on demand
+        },
+
+        // Prediction train & predict
         new SystemTaskConfig()
         {
             SystemTaskName = SystemTaskTypeNames.RunPredictionPredict,
@@ -107,13 +128,7 @@ builder.Services.AddSingleton<ISystemTaskList>((scope) =>
         {
             SystemTaskName = SystemTaskTypeNames.RunPredictionTrain,
             ExecuteFrequency = TimeSpan.Zero        // Only runs on demand
-        }     
-
-        //new SystemTaskConfig()
-        //{
-        //    SystemTaskName = SystemTaskTypeNames.RunPrediction,
-        //    ExecuteFrequency = TimeSpan.Zero
-        //}        
+        }             
     };
     systemTaskConfigs.ForEach(stc => stc.NextExecuteTime = stc.ExecuteFrequency== TimeSpan.Zero ? DateTimeOffset.MaxValue :
                             DateTimeUtilities.GetNextTaskExecuteTimeFromFrequency(stc.ExecuteFrequency));

@@ -1,0 +1,122 @@
+﻿@page "/imagesetinfos/create"
+
+@using CFAIProcessor.Interfaces
+@using CFAIProcessor.Models
+@using CFAIProcessor.UI.Utilities
+@inject NavigationManager NavigationManager
+@inject IImageSetInfoService ImageSetInfoService
+
+@attribute [Authorize(Roles = "Administrator,User")]
+
+<h1>Create</h1>
+
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="ImageSetInfo" OnValidSubmit="AddImageSetInfo" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert" />
+
+            <div class="mb-3">
+                <InputFile id="datafile" OnChange="OnDataFileChangeAsync" />
+                <ValidationMessage For="() => ImageSetInfo.DataSource" class="text-danger" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/datasetinfos">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private ImageSetInfo? ImageSetInfo { get; set; } = new();
+
+    private string _dataFile = String.Empty;
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddImageSetInfo()
+    {
+        //using var context = DbFactory.CreateDbContext();
+        //context.Attach(User!).State = EntityState.Modified;
+
+        try
+        {
+            // // Save image as [UserId][Extension]
+            // if (!String.IsNullOrEmpty(_dataFile))
+            // {
+            //     //User.ImageSource = Path.GetFileName(_newImageFile);
+
+            //     var localFile = Path.Combine(ConfigUtilities.DataSetLocalFolder, Path.GetFileName(_dataFile));
+            //     if (File.Exists(localFile))
+            //     {
+            //         File.Delete(localFile);
+            //     }
+            //     File.Move(_dataFile, localFile);
+            //     _dataFile = "";
+            // }
+
+            ImageSetInfo.DataSource = Path.Combine(ConfigUtilities.ImageSetLocalFolder, Path.GetFileName(_dataFile));
+            ImageSetInfoService.Add(ImageSetInfo, _dataFile);
+        }
+        catch (Exception)
+        {
+            // if (!UserExists(User!.Id))
+            // {
+            //     NavigationManager.NavigateTo("notfound");
+            // }
+            // else
+            // {
+            //     throw;
+            // }
+        }
+        finally
+        {
+            // Clean up if necessary
+            if (File.Exists(_dataFile))
+            {
+                File.Delete(_dataFile);
+            }
+        }
+
+        NavigationManager.NavigateTo("/imaghesetinfos");
+    }
+
+    private async Task OnDataFileChangeAsync(InputFileChangeEventArgs eventArgs)
+    {
+        // Check file size
+        if (eventArgs.File.Size > ConfigUtilities.MaxImageSetUploadSize)
+        {
+            throw new ArgumentException("File is too big");
+        }
+
+        // Check file extenson
+        if (!eventArgs.File.Name.EndsWith(".zip"))
+        {
+            throw new ArgumentException("Invalid file type");
+        }
+
+        // Save to local file
+        using (var stream = eventArgs.File.OpenReadStream())
+        {
+            _dataFile = Path.Combine(ConfigUtilities.TempLocalFolder, eventArgs.File.Name);
+            using (var streamWriter = new FileStream(_dataFile, FileMode.Create))
+            {
+                await stream.CopyToAsync(streamWriter);
+            }
+
+            // // Check that file can be uploaded
+            // var content = File.ReadAllBytes(_dataFile);
+            // if (!(await FileSecurityCheckerService.ValidateCanUploadImageAsync(content)))
+            // {
+            //     File.Delete(_newImageFile);
+            //     _newImageFile = "";
+            // }
+        }
+    }
+}

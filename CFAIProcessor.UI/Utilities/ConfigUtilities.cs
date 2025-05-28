@@ -6,6 +6,8 @@ namespace CFAIProcessor.UI.Utilities
     {
         public static int MaxDataSetUploadSize = 10000000;
 
+        public static int MaxImageSetUploadSize = 1000000000;
+
         public static int MaxUploadImageSize = 100000;
 
         /// <summary>
@@ -18,7 +20,11 @@ namespace CFAIProcessor.UI.Utilities
 
         public static string DataSetLocalFolder = "D:\\Data\\Dev\\C#\\cf-ai-processor-local\\Data Sets";
 
-        public static string TempLocalFolder = "D:\\Data\\Dev\\C#\\cf-ai-processor-local\\Temp";
+        public static string ImageClassifyModelsLocalFolder = "D:\\Data\\Dev\\C#\\cf-ai-processor-local\\Image Classify Models";
+
+        public static string ImageSetLocalFolder = "D:\\Data\\Dev\\C#\\cf-ai-processor-local\\Image Sets";
+
+        public static string TempLocalFolder = "D:\\Data\\Dev\\C#\\cf-ai-processor-local\\Temp";        
 
         public static string PredictionModelsLocalFolder = "D:\\Data\\Dev\\C#\\cf-ai-processor-local\\Prediction Models";
 

@@ -1,0 +1,77 @@
+﻿@page "/imagesetinfos"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using CFAIProcessor.Interfaces
+@using CFAIProcessor.Models
+
+@inject IImageSetInfoService ImageSetInfoService
+
+@using System.IO
+@inject IJSRuntime JS
+
+@attribute [Authorize(Roles = "Administrator,User")]
+
+<h3>Index</h3>
+
+<script>
+    window.downloadFileFromStream = async (fileName, contentStreamReference) =>
+    {
+        const arrayBuffer = await contentStreamReference.arrayBuffer();
+        const blob = new Blob([arrayBuffer]);
+        const url = URL.createObjectURL(blob);
+        const anchorElement = document.createElement('a');
+        anchorElement.href = url;
+        anchorElement.download = fileName ?? '';
+        anchorElement.click();
+        anchorElement.remove();
+        URL.revokeObjectURL(url);
+    }
+</script>
+
+<p>
+    <a href="imagesetinfos/create">Add New</a>
+
+    <br />
+    <div style="display: inline-block">
+    </div>
+</p>
+
+@if (ImageSetInfosQueryable == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <QuickGrid Class="table" Items="@ImageSetInfosQueryable">
+        <PropertyColumn Property="imageSetInfo => imageSetInfo.Name" />
+
+        <TemplateColumn Context="imageSetInfo">
+            <a href="@($"imagesetinfos/details?id={imageSetInfo.Id}")">Details</a>
+            <a href="@($"imageclassify/classify?id={imageSetInfo.Id}")">Classify</a>
+            <a href="@($"imageclassify/train?id={imageSetInfo.Id}")">Train</a>
+        </TemplateColumn>
+    </QuickGrid>
+}
+
+@code {
+    private IQueryable<ImageSetInfo> ImageSetInfosQueryable;
+
+    private bool IsBusy { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsBusy = true;
+
+        await RefreshDataSetInfosAsync();
+    }
+
+    private async Task RefreshDataSetInfosAsync()
+    {
+        IsBusy = true;
+
+        ImageSetInfosQueryable = ImageSetInfoService.GetAll()
+                        .OrderBy(dsi => dsi.Name)
+                        .AsQueryable();
+
+        IsBusy = false;
+    }
+}

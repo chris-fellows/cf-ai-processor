@@ -11,7 +11,7 @@ namespace CFAIProcessor.ImageClassify
     {
         public void RunTrainAndPredictModel(CancellationToken cancellationToken)
         {
-            var config = new ImageClassifyConfig()
+            var config = new ImageClassifyConfigV1()
             {
                 AllImageFolder = "D:\\Data\\Dev\\C#\\cf-ai-processor-local\\Cats & Dogs dataset\\kagglecatsanddogs_5340\\PetImages",
                 TrainImageFolder = "D:\\Data\\Dev\\C#\\cf-ai-processor-local\\Cats & Dogs Test\\train",
@@ -24,7 +24,7 @@ namespace CFAIProcessor.ImageClassify
                 TrainEpochs = 10
             };
 
-            var imageClassifier = new ImageClassifier();
+            var imageClassifier = new ImageClassifierV1();
 
             imageClassifier.TrainAndClassify(config);
         }

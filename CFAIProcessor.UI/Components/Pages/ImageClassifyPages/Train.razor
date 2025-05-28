@@ -1,0 +1,101 @@
+﻿@page "/imageclassify/train"
+
+@using CFAIProcessor.Constants
+@using CFAIProcessor.Interfaces
+@using CFAIProcessor.Models
+@using CFAIProcessor.SystemTask
+@using CFAIProcessor.UI.Utilities
+
+@inject NavigationManager NavigationManager
+@inject IImageSetInfoService ImageSetInfoService
+@inject ISystemTaskList SystemTaskList
+@inject IRequestContextService RequestContextService
+
+@rendermode InteractiveServer
+@attribute [StreamRendering]
+@attribute [Authorize(Roles = "Administrator,User")]
+
+<h3>Train</h3>
+
+<hr />
+@if (ImageSetInfo is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="ImageTrainConfig" OnValidSubmit="RunTrain" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>                
+
+                <div class="mb-3">
+                    <label for="name" class="form-label">Model name:</label> 
+                    <InputText id="name" @bind-Value="ImageTrainConfig.ModelName" class="form-control" /> 
+                    <ValidationMessage For="() => ImageTrainConfig.ModelName" class="text-danger" /> 
+                </div>        
+
+                <div class="mb-3">
+                    <label for="TrainingEpochs" class="form-label">Epochs:</label>
+                    <InputNumber id="TrainingEpochs"  @bind-Value="ImageTrainConfig.TrainingEpochs" min="0" max="Int32.MaxValue" type="range"/>
+                    <ValidationMessage For="() => ImageTrainConfig.TrainingEpochs" class="text-danger" />
+                </div>                        
+
+                <button type="submit" class="btn btn-primary">Train</button>
+            </EditForm>            
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/imageclassify/models">Back to List</a>
+</div>
+
+
+@code {
+    [SupplyParameterFromQuery]
+    private string Id { get; set; }     // DataSetInfo.Id
+
+    private ImageSetInfo ImageSetInfo { get; set; }
+
+    private ImageTrainConfig ImageTrainConfig { get; set; } = new();  
+
+    // protected override async Task OnParametersSetAsync()
+    // {     
+    //     await base.OnParametersSetAsync();
+    // }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Set defaults
+        ImageTrainConfig = new ImageTrainConfig()
+        {            
+            TrainingEpochs = 1000,            
+            UserId = RequestContextService.UserId                       
+        };     
+
+        // Get data set
+        ImageSetInfo = ImageSetInfoService.GetById(Id);
+
+        if (ImageSetInfo is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task RunTrain()
+    {
+        ImageTrainConfig.ModelFolder = Path.Combine(ConfigUtilities.ImageClassifyModelsLocalFolder, ImageTrainConfig.ModelName);
+
+        var systemTaskRequest = new SystemTaskRequest(DateTimeOffset.UtcNow,
+                                        new Dictionary<string, object>()
+                                        {
+                                           { "ImageTrainConfig", ImageTrainConfig } 
+                                        },
+                                        SystemTaskTypeNames.RunImageTrain);
+        SystemTaskList.AddRequest(systemTaskRequest);             
+
+        NavigationManager.NavigateTo("/imagesetinfos");
+    }
+}
